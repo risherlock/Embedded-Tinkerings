@@ -17,5 +17,18 @@ int main()
   }
   usart_txln("INA219 success!");
 
+  // while(1)
+  // {
+  //   if(ina219_get_status())
+  //   {
+  //     usart_txln("INA219 error!");
+  //     while(1);
+  //   }
+
+  //   float bus_vol = ina219_get_bus_voltage();
+  //   float shunt_vol = ina219_get_shunt_voltage();
+  //   float current = ina219_get_current();
+  // }
+
   return 0;
 }

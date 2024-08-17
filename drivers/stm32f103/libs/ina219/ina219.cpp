@@ -1,6 +1,11 @@
+#include "usart.h"
 #include "ina219.h"
 #include "stm32f10x.h"
-#include "usart.h"
+
+/**
+ * @todo
+ *   1. Check math overflow flag for power and current calculations.
+ */
 
 // INA219 macros
 #define INA219_I2C_SLAVE_ADD 0x40
@@ -21,6 +26,7 @@
 
 static uint16_t read_clr = 0; // Just to reset SR1_ADDR by reading SR1 and SR2.
 static uint16_t config_val = 0x399F; // Configuration value tracker.
+static float current_lsb = 0.0; // Please calibrate for current/power measurements.
 
 void i2c_init(void);
 uint16_t i2c_read(const uint8_t reg);
@@ -29,18 +35,18 @@ void i2c_write(const uint8_t reg, const uint16_t val);
 bool ina219_init(void)
 {
   i2c_init();
-  bool status_cal = ina219_calibrate(0x0000);
-  bool status_con = ina219_configure(0x399F);
 
-  return status_cal && status_con;
+  return ina219_get_status();
 }
 
-// See page 23, ina219.pdf.
-bool ina219_calibrate(const uint16_t val)
+// See page 13, ina219.pdf.
+bool ina219_calibrate(const float max_current, const float r_shunt)
 {
-  i2c_write(INA219_REG_CALIBRATION, val);
+  current_lsb = max_current / 32768.0f;
+  const uint16_t calibration_val = (uint16_t)(0.04096 / (current_lsb * r_shunt));
+  i2c_write(INA219_REG_CALIBRATION, calibration_val);
 
-  if(i2c_read(INA219_REG_CALIBRATION) == val)
+  if(i2c_read(INA219_REG_CALIBRATION) == calibration_val)
   {
     return true;
   }
@@ -48,7 +54,7 @@ bool ina219_calibrate(const uint16_t val)
   return false;
 }
 
-// See page 19, ina219.pdf.
+// ina219_regcal.cpp can be used to generate register value for desired configurations.
 bool ina219_configure(const uint16_t val)
 {
   i2c_write(INA219_REG_CONFIGURATION, val);
@@ -65,22 +71,32 @@ bool ina219_configure(const uint16_t val)
 float ina219_get_bus_voltage(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_BUS_VOLTAGE);
+  const float bus_voltage_lsb = 4e-3; // 4mV
 
-  return 123.456;
+  return (reg_val >> 3) * bus_voltage_lsb;
 }
 
 float ina219_get_current(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_CURRENT);
 
-  return 123.456;
+  return reg_val * current_lsb;
 }
 
 float ina219_get_shunt_voltage(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_SHUNT_VOLTAGE);
+  const float shunt_voltage_lsb = 1e-6; // 10uV
 
-  return 123.456;
+  return reg_val * shunt_voltage_lsb;
+}
+
+// Watts
+float ina219_get_power(void)
+{
+  uint16_t reg_val = i2c_read(INA219_REG_POWER);
+
+  return reg_val * 20 * current_lsb;
 }
 
 // I2C test by reading config register.
@@ -142,7 +158,7 @@ uint16_t i2c_read(const uint8_t reg)
 /**
  * @brief Writes 2 bytes to register.
  * @cite Figure 15 of ina219.pdf.
-*/
+ */
 void i2c_write(const uint8_t reg, const uint16_t val)
 {
   i2c2_start;

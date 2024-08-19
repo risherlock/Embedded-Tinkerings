@@ -17,12 +17,15 @@ core/cmsis/core_support/core_cm3.c \
 core/cmsis/device_support/system_stm32f10x.c \
 libs/delay/delay.c \
 libs/uart/usart.c \
-libs/util/util.c
+libs/util/util.c \
+libs/si446x/mini_morse.c \
+libs/si446x/radio.c \
+libs/si446x/si446x/si446x_ctrl.c \
+libs/si446x/si446x_hal.c \
+main_si446x.c
 
 # CPU sources
 CPP_SOURCES = \
-libs/ina219/ina219.cpp \
-main.cpp
 
 # C/CPP includes
 C_INCLUDES =  \
@@ -31,7 +34,7 @@ C_INCLUDES =  \
 -Ilibs/uart \
 -Ilibs/util \
 -Ilibs/delay \
--Ilibs/ina219
+-Ilibs/si446x
 
 # ASM sources
 ASM_SOURCES =  \

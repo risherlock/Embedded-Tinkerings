@@ -1,11 +1,5 @@
-#include "usart.h"
 #include "ina219.h"
 #include "stm32f10x.h"
-
-/**
- * @todo
- *   1. Check math overflow flag for power and current calculations.
- */
 
 // INA219 macros
 #define INA219_I2C_SLAVE_ADD 0x40
@@ -36,17 +30,7 @@ bool ina219_init(void)
 {
   i2c_init();
 
-  return ina219_get_status();
-}
-
-// See page 13, ina219.pdf.
-bool ina219_calibrate(const float max_current, const float r_shunt)
-{
-  current_lsb = max_current / 32768.0f;
-  const uint16_t calibration_val = (uint16_t)(0.04096 / (current_lsb * r_shunt));
-  i2c_write(INA219_REG_CALIBRATION, calibration_val);
-
-  if(i2c_read(INA219_REG_CALIBRATION) == calibration_val)
+  if(ina219_reset())
   {
     return true;
   }
@@ -54,7 +38,45 @@ bool ina219_calibrate(const float max_current, const float r_shunt)
   return false;
 }
 
-// ina219_regcal.cpp can be used to generate register value for desired configurations.
+// Reset sensor to startup state.
+bool ina219_reset(void)
+{
+  i2c_write(INA219_REG_CONFIGURATION, 0x8000);
+
+  if(i2c_read(INA219_REG_CONFIGURATION) == 0x399F)
+  {
+    config_val = 0x399F;
+    current_lsb = 0.0;
+
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * @brief Populates calibration register (0x05) for current and power measurements.
+ * @param max_current Maximum expected current, Amp.
+ * @param r_shunt Shunt resistance, Ohm.
+ * @cite Page 13, ina219.pdf.
+ */
+bool ina219_calibrate(const float max_current, const float r_shunt)
+{
+  float temp_current_lsb = max_current * 3.0517578125e-5;
+  const uint16_t calibration_val = (uint16_t)(0.04096 / (current_lsb * r_shunt));
+  i2c_write(INA219_REG_CALIBRATION, calibration_val);
+
+  // The least significant bit is always 0.
+  if(i2c_read(INA219_REG_CALIBRATION) == (calibration_val & 0xFFFE))
+  {
+    current_lsb = temp_current_lsb;
+    return true;
+  }
+
+  return false;
+}
+
+// See ina219_regcal.cpp to compute config_val.
 bool ina219_configure(const uint16_t val)
 {
   i2c_write(INA219_REG_CONFIGURATION, val);
@@ -68,6 +90,7 @@ bool ina219_configure(const uint16_t val)
   return false;
 }
 
+// Voltage across in- and gnd, V.
 float ina219_get_bus_voltage(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_BUS_VOLTAGE);
@@ -76,6 +99,7 @@ float ina219_get_bus_voltage(void)
   return (reg_val >> 3) * bus_voltage_lsb;
 }
 
+// Current through the shunt resistor, mA.
 float ina219_get_current(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_CURRENT);
@@ -83,15 +107,16 @@ float ina219_get_current(void)
   return reg_val * current_lsb;
 }
 
+// Voltage across shunt resistor, V.
 float ina219_get_shunt_voltage(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_SHUNT_VOLTAGE);
-  const float shunt_voltage_lsb = 1e-6; // 10uV
+  const float shunt_voltage_lsb = 1e-5; // 10uV
 
   return reg_val * shunt_voltage_lsb;
 }
 
-// Watts
+// Power consumed, Watts.
 float ina219_get_power(void)
 {
   uint16_t reg_val = i2c_read(INA219_REG_POWER);
@@ -132,7 +157,7 @@ void i2c_init(void)
 }
 
 /**
- * @brief Receive two bytes from INA219 in master receiver mode.
+ * @brief Receives two bytes from INA219 in master receiver mode.
  * @cite Figure 276 of rm008.pdf and figure 16 of ina219.pdf.
  */
 uint16_t i2c_read(const uint8_t reg)

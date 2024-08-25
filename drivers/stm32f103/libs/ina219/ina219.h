@@ -19,6 +19,7 @@ enum ina219_status
 
 // Configuration and utility functions.
 bool ina219_init(void);
+bool ina219_reset(void);
 bool ina219_get_status(void);
 void ina219_save_power(void);
 bool ina219_configure(const uint16_t val);

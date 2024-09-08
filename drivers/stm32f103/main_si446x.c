@@ -8,14 +8,14 @@
 #include "mini_morse.h"
 
 // const uint8_t radio_msg[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ,.!:;()\"@&?-+/=*\\";
-const uint8_t radio_msg[] = "swwxABCDEFGHIm";
+const uint8_t radio_msg[] = "Namaste!";
 
 int main()
 {
   led_init();
   delay_init();
   usart_init(921600);
-  usart_txln("Namastee!");
+  usart_txln("Namaste!");
 
   while (!radio_init())
   {
@@ -24,8 +24,8 @@ int main()
   }
   usart_txln("Radio success!");
 
-  // radio_init_morse();
-  // mini_morse_tx(radio_msg, sizeof(radio_msg));
+  radio_init_morse();
+  mini_morse_tx(radio_msg, sizeof(radio_msg));
 
   while(0x221b)
   {
@@ -33,6 +33,7 @@ int main()
     radio_set_state(SLEEP);
     delay_ms(2000);
   }
+
   return 0;
 }
 

@@ -2,7 +2,6 @@
 #include "si446x_hal.h"
 #include "si446x_ctrl.h"
 #include "si446x_defs.h"
-#include "radio_config.h"
 
 #include <string.h>
 
@@ -57,19 +56,5 @@ void si446x_ctrl_send_cmd_stream(const uint8_t cmd, const uint8_t* buffer, const
   si446x_hal_spi_write_byte(cmd);
   si446x_hal_spi_write(buffer, len);
   si446x_hal_spi_nsel_high();
-  si446x_ctrl_wait_cts();
-}
-
-void si446x_set_properties(void)
-{
-  static const uint8_t rcda[] = RADIO_CONFIGURATION_DATA_ARRAY;
-  uint16_t length_idx = 0;
-
-  while (rcda[length_idx] != 0x00)
-  {
-    si446x_ctrl_send_stream(&rcda[length_idx + 1], rcda[length_idx]);
-    length_idx += rcda[length_idx] + 1;
-    delay_ms(20);
-  }
   si446x_ctrl_wait_cts();
 }

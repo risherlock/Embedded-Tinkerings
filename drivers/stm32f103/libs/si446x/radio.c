@@ -3,10 +3,10 @@
 #include "si446x_hal.h"
 #include "si446x_ctrl.h"
 #include "si446x_defs.h"
-#include "radio_config.h"
 #include "usart.h"
 
 #define RADIO_PAYLOAD_LENGTH 255
+
 #include <string.h>
 
 uint16_t radio_get_id(void)
@@ -24,87 +24,22 @@ uint8_t radio_init(void)
 {
   si446x_hal_init();
 
-  radio_reset();
-  si446x_set_properties();
-
   if(radio_get_id() != Si446x_CONF_ID)
   {
     return 0;
   }
 
-  uint8_t buffer[20] = {0};
-  buffer[0] = RF4463_GPIO_NO_CHANGE;
-	buffer[1] = RF4463_GPIO_NO_CHANGE;
-	buffer[2] = RF4463_GPIO_RX_STATE;
-	buffer[3] = RF4463_GPIO_TX_STATE;
-	buffer[4] = RF4463_NIRQ_INTERRUPT_SIGNAL;
-	buffer[5] = RF4463_GPIO_SPI_DATA_OUT;
-	si446x_ctrl_send_cmd_stream(Si446x_CMD_GPIO_PIN_CFG,buffer,6);
+  radio_reset();
 
+  const uint8_t cmd[] = {0x01, 0x00, 0x01, 0xC9, 0xC3, 0x80};
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_POWER_UP, cmd, sizeof(cmd));
+  si446x_ctrl_wait_cts(); // May take longer to set the CTS bit
+
+  uint8_t buffer[20] = {0};
   buffer[0] = 98;
   set_properties(Si446x_PROP_GLOBAL_XO_TUNE, buffer, 1);
 
-  buffer[0] = 0x40;
-	set_properties(RF4463_PROPERTY_GLOBAL_CONFIG, buffer, 1);
-
-  buffer[0] = 0x08;
-	buffer[1] = 0x14;
-	buffer[2] = 0x00;
-	buffer[3] = 0x0f;
-	buffer[4] = RF4463_PREAMBLE_FIRST_1|RF4463_PREAMBLE_LENGTH_BYTES|RF4463_PREAMBLE_STANDARD_1010;
-	buffer[5] = 0x00;
-	buffer[6] = 0x00;
-	buffer[7] = 0x00;
-	buffer[8] = 0x00;
-	set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH,buffer, 9);
-
-	buffer[0] = 2-1;
-	buffer[1] = 0x2d;
-	buffer[2] = 0xd4;
-	set_properties(Si446x_PROP_SYNC_CONFIG, buffer, 3);
-
-  buffer[0] = RF4463_CRC_SEED_ALL_1S|RF4463_CRC_ITU_T ;
-	set_properties(Si446x_PROP_PKT_CRC_CONFIG, buffer, 1);
-
-	buffer[0] = RF4463_CRC_ENDIAN;
-	set_properties(Si446x_PROP_PKT_CONFIG1, buffer, 1);
-
-	buffer[0] = RF4463_IN_FIFO | RF4463_DST_FIELD_ENUM_2;
-	buffer[1] = RF4463_SRC_FIELD_ENUM_1;
-	buffer[2] = 0x00;
-	set_properties(Si446x_PROP_PKT_LEN,buffer,3);
-
-  buffer[0] = 0x00;
-	buffer[1] = 0x01;
-	buffer[2] = RF4463_FIELD_CONFIG_PN_START;
-	buffer[3] = RF4463_FIELD_CONFIG_CRC_START|RF4463_FIELD_CONFIG_SEND_CRC|RF4463_FIELD_CONFIG_CHECK_CRC|RF4463_FIELD_CONFIG_CRC_ENABLE;
-	buffer[4] = 0x00;
-	buffer[5] = 50;
-	buffer[6] = RF4463_FIELD_CONFIG_PN_START;
-	buffer[7] = RF4463_FIELD_CONFIG_CRC_START|RF4463_FIELD_CONFIG_SEND_CRC|RF4463_FIELD_CONFIG_CHECK_CRC|RF4463_FIELD_CONFIG_CRC_ENABLE;;
-	buffer[8]  = 0x00;
-	buffer[9] = 0x00;
-	buffer[10] = 0x00;
-	buffer[11] = 0x00;
-	set_properties(Si446x_PROP_PKT_FIELD_1_LENGTH_12_8 ,buffer,12);
-
-  buffer[0] = 0x00;
-	buffer[1] = 0x00;
-	buffer[2] = 0x00;
-	buffer[3] = 0x00;
-	buffer[4] = 0x00;
-	buffer[5] = 0x00;
-	buffer[6] = 0x00;
-	buffer[7] = 0x00;
-	set_properties(Si446x_PROP_PKT_FIELD_4_LENGTH_12_8,buffer,8);
-
-  // radio_set_frequency();
-  // radio_configure_packet();
-  radio_set_power(127);
-  radio_set_state(SLEEP);
-
-  // radio_init_morse();
-
+radio_configure_packet();
   return 1;
 }
 
@@ -242,30 +177,6 @@ uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len
   return si446x_ctrl_wait_cts();
 }
 
-/**
- * @brief Configure frequency, channel step size, data rate, and
- *  frequency deviation.
- * @cite Si447x PLL Synnthesizer Frequency / VCO_CNT Calculator Rev 0.4
- */
-void radio_set_frequency(void)
-{
-  // Frequency control: Central frequency 433Mhz and channel step size 100kHz
-  uint8_t freq_ctrl[] = {0x38, 0xdd, 0xdd, 0xdd, 0x1b, 0x4f};
-  set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_ctrl, sizeof(freq_ctrl));
-
-  // // Rx voltage controlled oscillator adjust
-  // uint8_t vco_adj[] = {0xfe};
-  // set_properties(Si446x_PROP_FREQ_CONTROL_VCOCNT_RX_ADJ, vco_adj, sizeof(vco_adj));
-
-  // // Modem data rate: 0.5 kbps
-  // uint8_t data_rate[] = {0x00, 0x01, 0xf4};
-  // set_properties(Si446x_PROP_MODEM_DATA_RATE_2, data_rate, sizeof(data_rate));
-
-  // // Modem frequency deviation: 1kHz
-  // uint8_t freq_div[] = {0x00, 0x00, 0x46};
-  // set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, freq_div, sizeof(freq_div));
-}
-
 void radio_configure_packet(void)
 {
   // Preamble: Length 4
@@ -310,22 +221,16 @@ void radio_set_power(uint8_t power)
   {
     power = 127;
   }
-	uint8_t power_ctrl[]={0x08,power,0x00,0x3d};
+
+  uint8_t power_ctrl[]={0x08, power, 0x00, 0x3d};
   set_properties(Si446x_PROP_PA_MODE, power_ctrl, sizeof(power_ctrl));
 }
 
 void radio_init_morse(void)
 {
-  // Enable GPIO1
-  const uint8_t gpio_cmd[] = {0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00};
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_GPIO_PIN_CFG, gpio_cmd, sizeof(gpio_cmd));
+  const uint8_t modem_config[] = {0xA9, 0x80, 0x1, 0xE0, 0x78, 0x0, 0x11, 0x11};
+  set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
 
-  // Enable OOK direct Tx
-  const uint8_t mode[] = {0b10101001};
-  set_properties(Si446x_PROP_MODEM_MOD_TYPE, mode, sizeof(mode));
-
-  // Configure modem
-  const uint8_t modem[] = {0xc3, 0x50, 0x01};
-  set_properties(Si446x_PROP_MODEM_DATA_RATE_2, modem, sizeof(modem));
-  radio_set_state(READY);
+  const uint8_t freq_config[] = {0x3C, 0x8, 0x0, 0x0};
+  set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_config, sizeof(freq_config));
 }

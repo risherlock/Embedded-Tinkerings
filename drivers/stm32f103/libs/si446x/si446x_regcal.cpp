@@ -47,7 +47,7 @@ int main()
                                  RF4463_MOD_SOURCE_DIRECT_MODE |
                                  RF4463_MOD_TYPE_OOK;
   // CW, OOK, FSK, GFSK
-  const float rf_freq = 915.0; // MHz
+  const float rf_freq = 920.0; // MHz
   const float freq_xo = 30.0; // MHz
 
   // PA: CW, OOK, FSK, GFSK
@@ -95,10 +95,10 @@ int main()
   std::cout << std::endl;
 
   // Modem configuration
-  std::cout << "MODEM_FREQ_DEV_2/1/0 = " << std::hex << std::uppercase << "0x" << ((reg_fd) & 0xFFFFFF) << std::endl;
   std::cout << "MODEM_MOD_TYPE = " << std::hex << std::uppercase << "0x" << modem_mod_type_reg << std::endl;
   std::cout << "MODEM_MAP_CONTROL = " << std::hex << std::uppercase << "0x" << modem_map_control_reg << std::endl;
   std::cout << "MODEM_DATA_RATE_2/1/0 = " << std::hex << std::uppercase << "0x" << (reg_dr & 0xFFFFFF) << std::endl;
+  std::cout << "MODEM_FREQ_DEV_2/1/0 = " << std::hex << std::uppercase << "0x" << ((reg_fd) & 0xFFFFFF) << std::endl;
   std::cout << std::endl;
 
   // Power amplifier
@@ -111,22 +111,23 @@ int main()
   std::cout << "const uint8_t power_amp_config[] = {0x" << std::hex << std::uppercase
             << unsigned(pa_mode) <<  ", 0x"
             << unsigned(pa_level) <<  ", 0x"
+            << 0 <<  ", 0x"
             << (reg_pa_tc | (pa_to_mod_delay << 5))
             << "};" << std::endl;
   std::cout << "set_properties(Si446x_PROP_PA_MODE, power_amp_config, sizeof(power_amp_config));" << std::endl;
   std::cout << std::endl;
 
   std::cout << "const uint8_t modem_config[] = {0x" << std::hex << std::uppercase
-            << ((reg_fd >> 16) & 0xFF) << ", 0x"
-            << ((reg_fd >> 8) & 0xFF) << ", 0x"
-            << (reg_fd & 0xFF) << ", 0x"
             << modem_mod_type_reg << ", 0x"
             << modem_map_control_reg << ", 0x"
             << ((reg_dr >> 16) & 0xFF) << ", 0x"
             << ((reg_dr >> 8) & 0xFF) <<  ", 0x"
-            << (reg_dr & 0xFF)
+            << (reg_dr & 0xFF)  <<  ", 0x"
+            << ((reg_fd >> 16) & 0xFF) << ", 0x"
+            << ((reg_fd >> 8) & 0xFF) << ", 0x"
+            << (reg_fd & 0xFF)
             << "};" << std::endl;
-  std::cout << "set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, modem_config, sizeof(modem_config));" << std::endl;
+  std::cout << "set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));" << std::endl;
   std::cout << std::endl;
 
   std::cout << "const uint8_t freq_config[] = {0x" << std::hex << std::uppercase

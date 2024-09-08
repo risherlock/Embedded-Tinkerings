@@ -15,7 +15,6 @@
 
 void si446x_ctrl_send_cmd(const uint8_t cmd);
 void si446x_ctrl_send_cmd_stream(const uint8_t cmd, const uint8_t* buffer, const uint8_t len);
-void si446x_set_properties();
 
 uint8_t si446x_ctrl_wait_cts(void);
 uint8_t si446x_ctrl_get_response(uint8_t* buffer, const uint8_t len);

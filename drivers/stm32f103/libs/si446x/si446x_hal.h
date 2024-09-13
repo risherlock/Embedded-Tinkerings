@@ -22,32 +22,32 @@ void si446x_hal_spi_write(const uint8_t* buffer, const uint8_t len);
 
 inline void si446x_morse_low(void)
 {
-  GPIOB->BRR = GPIO_BRR_BR12;
+  GPIOB->BRR = GPIO_BRR_BR0;
 }
 
 inline void si446x_morse_high(void)
 {
-  GPIOB->BSRR = GPIO_BSRR_BS12;
+  GPIOB->BSRR = GPIO_BSRR_BS0;
 }
 
 inline void si446x_hal_spi_nsel_low(void)
 {
-  GPIOA->BRR |= GPIO_BRR_BR4;
+  GPIOB->BRR |= GPIO_BRR_BR12;
 }
 
 inline void si446x_hal_spi_nsel_high(void)
 {
-  GPIOA->BSRR |= GPIO_BSRR_BS4;
+  GPIOB->BSRR |= GPIO_BSRR_BS12;
 }
 
 inline void si446x_hal_sdn_low(void)
 {
-  GPIOB->BRR |= GPIO_BRR_BR6;
+  GPIOA->BRR |= GPIO_BRR_BR7;
 }
 
 inline void si446x_hal_sdn_high(void)
 {
-  GPIOB->BSRR |= GPIO_BSRR_BS6;
+  GPIOA->BSRR |= GPIO_BSRR_BS7;
 }
 
 #endif // si446x_hal.h

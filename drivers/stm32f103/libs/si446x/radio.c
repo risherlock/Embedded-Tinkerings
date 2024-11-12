@@ -23,6 +23,7 @@ uint16_t radio_get_id(void)
 uint8_t radio_init(void)
 {
   si446x_hal_init();
+  delay_ms(10);
 
   if (radio_get_id() != Si446x_CONF_ID)
   {
@@ -39,7 +40,6 @@ uint8_t radio_init(void)
   buffer[0] = 98;
   set_properties(Si446x_PROP_GLOBAL_XO_TUNE, buffer, 1);
 
-  radio_configure_packet();
   return 1;
 }
 
@@ -229,6 +229,20 @@ void radio_set_power(uint8_t power)
 void radio_init_morse(void)
 {
   const uint8_t modem_config[] = {0xA9, 0x80, 0x1, 0xE0, 0x78, 0x0, 0x22, 0x22};
+  set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
+
+  const uint8_t freq_config[] = {0x39, 0x9, 0xB4, 0xE8};
+  set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_config, sizeof(freq_config));
+
+  const uint8_t band_config[] = {0xA};
+  set_properties(Si446x_PROP_MODEM_CLKGEN_BAND, band_config, sizeof(band_config));
+}
+
+void radio_init_gfsk(void)
+{
+  radio_configure_packet();
+
+  const uint8_t modem_config[] = {0xA3, 0x80, 0x0, 0x1, 0xF4, 0x0, 0x0, 0x45};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
 
   const uint8_t freq_config[] = {0x39, 0x9, 0xB4, 0xE8};

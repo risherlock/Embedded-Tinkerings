@@ -126,7 +126,7 @@ $(BUILD_DIR):
 
 # Flash the hex
 flash: all
-	openocd -f interface/stlink.cfg -f target/stm32f1x_clone.cfg -c "program $(BUILD_DIR)/$(TARGET).hex verify reset exit"
+	openocd -f interface/stlink.cfg -f target/stm32f1x.cfg -c "program $(BUILD_DIR)/$(TARGET).hex verify reset exit"
 
 # Delete build directory
 clean:

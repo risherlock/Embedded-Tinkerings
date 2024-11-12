@@ -13,7 +13,7 @@ uint16_t radio_get_id(void)
 {
   uint8_t part_info[4] = {0};
   si446x_ctrl_send_cmd(Si446x_CMD_PART_INFO);
-  if(si446x_ctrl_get_response(part_info, sizeof(part_info)))
+  if (si446x_ctrl_get_response(part_info, sizeof(part_info)))
   {
     return (part_info[2] << 8) + part_info[3];
   }
@@ -24,7 +24,7 @@ uint8_t radio_init(void)
 {
   si446x_hal_init();
 
-  if(radio_get_id() != Si446x_CONF_ID)
+  if (radio_get_id() != Si446x_CONF_ID)
   {
     return 0;
   }
@@ -39,7 +39,7 @@ uint8_t radio_init(void)
   buffer[0] = 98;
   set_properties(Si446x_PROP_GLOBAL_XO_TUNE, buffer, 1);
 
-radio_configure_packet();
+  radio_configure_packet();
   return 1;
 }
 
@@ -80,7 +80,7 @@ void radio_start_tx()
 
 void radio_start_rx()
 {
-  uint8_t rf_config[] = {0x00,0x00,0x00,0x00,0x00,0x08,0x08};
+  uint8_t rf_config[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x08};
   si446x_ctrl_send_cmd_stream(Si446x_CMD_START_RX, rf_config, sizeof(rf_config));
   // si446x_ctrl_wait_cts();
 }
@@ -124,13 +124,13 @@ void print_state()
 void radio_tx(const uint8_t *buffer, const uint16_t len)
 {
   radio_set_state(SPI_ACTIVE);
-  const uint8_t data=0x03;
-	si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO,&data,sizeof(data));
+  const uint8_t data = 0x03;
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, &data, sizeof(data));
   si446x_ctrl_send_cmd_stream(Si446x_CMD_WRITE_TX_FIFO, buffer, len);
   radio_start_tx();
 
   while (!radio_get_interrupt_status(5, 6)); // PACKET_SENT?
-  radio_clear_interrupt_status(2, 6);        // PACKET_SENT_PEND_CLR
+  radio_clear_interrupt_status(2, 6); // PACKET_SENT_PEND_CLR
 }
 
 /**
@@ -217,20 +217,23 @@ void radio_configure_packet(void)
 
 void radio_set_power(uint8_t power)
 {
-  if(power > 127)
+  if (power > 127)
   {
     power = 127;
   }
 
-  uint8_t power_ctrl[]={0x08, power, 0x00, 0x3d};
+  uint8_t power_ctrl[] = {0x08, power, 0x00, 0x3d};
   set_properties(Si446x_PROP_PA_MODE, power_ctrl, sizeof(power_ctrl));
 }
 
 void radio_init_morse(void)
 {
-  const uint8_t modem_config[] = {0xA9, 0x80, 0x1, 0xE0, 0x78, 0x0, 0x11, 0x11};
+  const uint8_t modem_config[] = {0xA9, 0x80, 0x1, 0xE0, 0x78, 0x0, 0x22, 0x22};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
 
-  const uint8_t freq_config[] = {0x3C, 0x8, 0x0, 0x0};
+  const uint8_t freq_config[] = {0x39, 0x9, 0xB4, 0xE8};
   set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_config, sizeof(freq_config));
+
+  const uint8_t band_config[] = {0xA};
+  set_properties(Si446x_PROP_MODEM_CLKGEN_BAND, band_config, sizeof(band_config));
 }

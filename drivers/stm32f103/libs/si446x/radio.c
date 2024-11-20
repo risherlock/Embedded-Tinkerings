@@ -296,3 +296,25 @@ void radio_init_gfsk(void)
                           RF4463_FIELD_CONFIG_CRC_ENABLE};
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_12_8, pkt_field2, sizeof(pkt_field2));
 }
+
+static uint8_t tx_buffer[256];
+
+void radio_tx_gfsk(const uint8_t* data, const uint8_t n)
+{
+  tx_buffer[0] = n + 4;
+  tx_buffer[1] = 0xFF;
+  tx_buffer[2] = 0xFF;
+  tx_buffer[3] = 0x00;
+  tx_buffer[4] = 0x00;
+
+  for (uint8_t i = 5; i < n + 4; i++)
+  {
+    tx_buffer[i] = data[i-5];
+  }
+
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_WRITE_TX_FIFO, tx_buffer, 1 + 4 + n);
+  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, (const uint8_t[]){4 + n}, 1);
+
+  const uint8_t clear_int[] = {0x00, 0x30, 0x00, 0x00};
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_START_TX, clear_int, sizeof(clear_int));
+}

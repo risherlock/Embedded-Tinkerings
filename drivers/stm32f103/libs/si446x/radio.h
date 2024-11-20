@@ -38,8 +38,6 @@ uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len
 
 void radio_init_morse(void);
 void radio_init_gfsk(void);
-
-void radio_tx(const uint8_t *buffer, const uint16_t len);
-uint8_t radio_rx(const uint8_t *buffer, const uint16_t len);
+void radio_tx_gfsk(const uint8_t* data, const uint8_t n);
 
 #endif // radio.h

@@ -38,6 +38,7 @@ uint8_t radio_init(void)
 
   set_properties(Si446x_PROP_GLOBAL_XO_TUNE, (const uint8_t[]){98}, 1);
 
+  radio_set_power(127);
   return 1;
 }
 
@@ -240,26 +241,58 @@ void radio_init_gfsk(void)
 {
   /* Modem configuration */
 
-  const uint8_t modem_config[] = {0x03, 0x00, 0x07};
-  set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
+  // const uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
+  // set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
-  const uint8_t nco_config[] = {0x05, 0xC9, 0xC3, 0x80}; // where?
-  set_properties(Si446x_PROP_MODEM_TX_NCO_MODE_3, nco_config, sizeof(nco_config));
+  const uint8_t modem_config[] = {0x03};
+  set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
 
   const uint8_t rate_config[] = {0x00, 0x4E, 0x20};
   set_properties(Si446x_PROP_MODEM_DATA_RATE_2, rate_config, sizeof(rate_config));
 
+  const uint8_t nco_config[] = {0x05, 0xC9, 0xC3, 0x80}; // where?
+  set_properties(Si446x_PROP_MODEM_TX_NCO_MODE_3, nco_config, sizeof(nco_config));
+
   const uint8_t fdev_config[] = {0x00, 0x00, 0x46};
   set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, fdev_config, sizeof(fdev_config));
-
-  const uint8_t freq_config[] = {0x39, 0x9, 0xB4, 0xE8};
-  set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_config, sizeof(freq_config));
 
   const uint8_t band_config[] = {0xA}; // where?
   set_properties(Si446x_PROP_MODEM_CLKGEN_BAND, band_config, sizeof(band_config));
 
+  const uint8_t freq_config[] = {0x39, 0x9, 0xB4, 0xE8};
+  set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_config, sizeof(freq_config));
+
   /* Packet configuration */
 
-  // const uint8_t preamble_len[] = {0x04}; // where?
-  // set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble_len, sizeof(preamble_len));
+  // Sync words
+  set_properties(Si446x_PROP_SYNC_CONFIG, (const uint8_t[]){0x02-1}, 1);
+
+  const uint8_t crc_config[] = {RF4463_CRC_SEED_ALL_1S | RF4463_CRC_CCITT, 0x01, 0x08, 0xFF, 0xFF, 0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x30};
+  set_properties(Si446x_PROP_PKT_CRC_CONFIG, crc_config, sizeof(crc_config));
+
+  const uint8_t preamble_len[] = {0x04};
+  set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble_len, sizeof(preamble_len));
+
+  const uint8_t preamble_config[] = {0b00110001};
+  set_properties(Si446x_PROP_PREAMBLE_CONFIG, preamble_config, sizeof(preamble_config));
+
+  uint8_t pkt_config1[] = {0x00};
+  set_properties(Si446x_PROP_PKT_CONFIG1, pkt_config1, sizeof(pkt_config1));
+
+  uint8_t pkt_len[] = {0x02, 0x01, 0x00 };
+  set_properties(Si446x_PROP_PKT_LEN, pkt_len, sizeof(pkt_len));
+
+  uint8_t pkt_field1[] = {0x00, 0x01, 0x00,
+                          RF4463_FIELD_CONFIG_CRC_START |
+                          RF4463_FIELD_CONFIG_SEND_CRC |
+                          RF4463_FIELD_CONFIG_CHECK_CRC |
+                          RF4463_FIELD_CONFIG_CRC_ENABLE};
+  set_properties(Si446x_PROP_PKT_FIELD_1_LENGTH_12_8, pkt_field1, sizeof(pkt_field1));
+
+  uint8_t pkt_field2[] = {0x00, 0x00, 0x00,
+                          RF4463_FIELD_CONFIG_CRC_START |
+                          RF4463_FIELD_CONFIG_SEND_CRC |
+                          RF4463_FIELD_CONFIG_CHECK_CRC |
+                          RF4463_FIELD_CONFIG_CRC_ENABLE};
+  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_12_8, pkt_field2, sizeof(pkt_field2));
 }

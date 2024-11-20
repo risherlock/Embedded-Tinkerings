@@ -7,9 +7,10 @@
 #include "si446x_hal.h"
 #include "mini_morse.h"
 
-const uint8_t radio_msg1[] = "This is the first message.";
-const uint8_t radio_msg2[] = "After the first message comes the second one!";
-const char cw_msg[] = "Namaste!";
+#include <inttypes.h>
+
+const uint8_t radio_msg1[] = "Namaste!";
+const uint8_t radio_msg2[] = "Hello, World!";
 
 void tx_gfsk(const uint8_t *data, const uint8_t n);
 
@@ -28,7 +29,7 @@ int main()
 
   usart_txln("Radio success!");
   radio_init_morse();
-  mini_morse_tx(cw_msg, sizeof(cw_msg));
+  mini_morse_tx(radio_msg1, sizeof(radio_msg1));
 
   radio_init_gfsk();
   uint8_t msg_flag = 1;

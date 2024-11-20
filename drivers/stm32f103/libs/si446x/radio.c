@@ -7,8 +7,6 @@
 
 #define RADIO_PAYLOAD_LENGTH 255
 
-#include <string.h>
-
 uint16_t radio_get_id(void)
 {
   uint8_t part_info[4] = {0};
@@ -32,13 +30,22 @@ uint8_t radio_init(void)
 
   radio_reset();
 
+  // Start-up sequence
   const uint8_t cmd[] = {0x01, 0x00, 0x01, 0xC9, 0xC3, 0x80};
   si446x_ctrl_send_cmd_stream(Si446x_CMD_POWER_UP, cmd, sizeof(cmd));
   si446x_ctrl_wait_cts(); // May take longer to set the CTS bit
 
-  set_properties(Si446x_PROP_GLOBAL_XO_TUNE, (const uint8_t[]){98}, 1);
+  // Clear all interrupts
+  const uint8_t clear_int[] = {0x00, 0x00, 0x00};
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_GET_INT_STATUS, clear_int, sizeof(clear_int));
 
+  // Initialize interrupt
+  const uint8_t initint[] = {RF4463_MODEM_INT_STATUS_EN | RF4463_PH_INT_STATUS_EN, 0xff, 0xff, 0x00};
+  set_properties(Si446x_PROP_INT_CTL_ENABLE, initint, sizeof(initint));
+
+  set_properties(Si446x_PROP_GLOBAL_XO_TUNE, (const uint8_t[]){98}, 1);
   radio_set_power(127);
+
   return 1;
 }
 
@@ -176,44 +183,6 @@ uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len
   return si446x_ctrl_wait_cts();
 }
 
-void radio_configure_packet(void)
-{
-  // Preamble: Length 4
-  const uint8_t len = 0x04;
-  const uint8_t preamble[] = {len, 0x14, 0x00, 0x00, 0x20 | 0x10 | 0x01};
-  set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble, sizeof(preamble));
-  delay_ms(10);
-
-  // Sync word
-  const uint8_t sync_words[] = {0x2d, 0xd4};
-  uint8_t sync_prop[5] = {0};
-  sync_prop[0] = sizeof(sync_words) - 1;
-  for (uint8_t i = 0; i < sizeof(sync_words); i++)
-  {
-    sync_prop[i + 1] = sync_words[i];
-  }
-  set_properties(Si446x_PROP_SYNC_CONFIG, sync_prop, sizeof(sync_prop));
-  delay_ms(10);
-
-  // Packet config: CCIT-16 CRC, 2 fields
-  const uint8_t packet[] = {0x05 | 0x80, 0x00, 0x02, 0x01, 0x00, 0x30, 0x30};
-  set_properties(Si446x_PROP_PKT_CRC_CONFIG, packet, sizeof(packet));
-
-  // Field 1
-  const uint8_t field_1[] = {0x00, 0x01, 0x00, 0x80 | 0x20 | 0x08 | 0x02};
-  set_properties(Si446x_PROP_PKT_FIELD_1_LENGTH_12_8, field_1, sizeof(field_1));
-
-  // Field 2
-  const uint8_t field_2[] = {0x00, RADIO_PAYLOAD_LENGTH, 0x00, 0x80 | 0x20 | 0x08 | 0x02};
-  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_12_8, field_2, sizeof(field_2));
-
-  // Clear other fields
-  const uint8_t clear[] = {0x00, 0x00, 0x00, 0x00};
-  set_properties(Si446x_PROP_PKT_FIELD_3_LENGTH_12_8, clear, sizeof(clear));
-  set_properties(Si446x_PROP_PKT_FIELD_4_LENGTH_12_8, clear, sizeof(clear));
-  set_properties(Si446x_PROP_PKT_FIELD_5_LENGTH_12_8, clear, sizeof(clear));
-}
-
 void radio_set_power(uint8_t power)
 {
   if (power > 127)
@@ -267,17 +236,16 @@ void radio_init_gfsk(void)
   // Sync words
   set_properties(Si446x_PROP_SYNC_CONFIG, (const uint8_t[]){0x02-1}, 1);
 
-  const uint8_t crc_config[] = {RF4463_CRC_SEED_ALL_1S | RF4463_CRC_CCITT, 0x01, 0x08, 0xFF, 0xFF, 0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x30};
+  const uint8_t crc_config[] = {RF4463_CRC_SEED_ALL_1S | RF4463_CRC_CCITT};
   set_properties(Si446x_PROP_PKT_CRC_CONFIG, crc_config, sizeof(crc_config));
 
   const uint8_t preamble_len[] = {0x04};
   set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble_len, sizeof(preamble_len));
 
-  const uint8_t preamble_config[] = {0b00110001};
+  const uint8_t preamble_config[] = {RF4463_PREAMBLE_FIRST_1 |
+                                     RF4463_PREAMBLE_LENGTH_BYTES |
+                                     RF4463_PREAMBLE_STANDARD_1010};
   set_properties(Si446x_PROP_PREAMBLE_CONFIG, preamble_config, sizeof(preamble_config));
-
-  uint8_t pkt_config1[] = {0x00};
-  set_properties(Si446x_PROP_PKT_CONFIG1, pkt_config1, sizeof(pkt_config1));
 
   uint8_t pkt_len[] = {0x02, 0x01, 0x00 };
   set_properties(Si446x_PROP_PKT_LEN, pkt_len, sizeof(pkt_len));
@@ -301,20 +269,24 @@ static uint8_t tx_buffer[256];
 
 void radio_tx_gfsk(const uint8_t* data, const uint8_t n)
 {
+  radio_set_state(SPI_ACTIVE);
+
   tx_buffer[0] = n + 4;
   tx_buffer[1] = 0xFF;
   tx_buffer[2] = 0xFF;
   tx_buffer[3] = 0x00;
   tx_buffer[4] = 0x00;
 
-  for (uint8_t i = 5; i < n + 4; i++)
+  for (uint8_t i = 0; i < n; i++)
   {
-    tx_buffer[i] = data[i-5];
+    tx_buffer[i+5] = data[i];
   }
 
   si446x_ctrl_send_cmd_stream(Si446x_CMD_WRITE_TX_FIFO, tx_buffer, 1 + 4 + n);
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, (const uint8_t[]){4 + n}, 1);
 
-  const uint8_t clear_int[] = {0x00, 0x30, 0x00, 0x00};
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_START_TX, clear_int, sizeof(clear_int));
+  radio_set_state(START_TX);
+
+  // const uint8_t clear_int[] = {0x00, 0x30, 0x00, 0x00};
+  // si446x_ctrl_send_cmd_stream(Si446x_CMD_START_TX, clear_int, sizeof(clear_int));
 }

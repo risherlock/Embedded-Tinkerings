@@ -36,9 +36,7 @@ uint8_t radio_init(void)
   si446x_ctrl_send_cmd_stream(Si446x_CMD_POWER_UP, cmd, sizeof(cmd));
   si446x_ctrl_wait_cts(); // May take longer to set the CTS bit
 
-  uint8_t buffer[20] = {0};
-  buffer[0] = 98;
-  set_properties(Si446x_PROP_GLOBAL_XO_TUNE, buffer, 1);
+  set_properties(Si446x_PROP_GLOBAL_XO_TUNE, (const uint8_t[]){98}, 1);
 
   return 1;
 }
@@ -240,14 +238,28 @@ void radio_init_morse(void)
 
 void radio_init_gfsk(void)
 {
-  radio_configure_packet();
+  /* Modem configuration */
 
-  const uint8_t modem_config[] = {0xA3, 0x80, 0x0, 0x1, 0xF4, 0x0, 0x0, 0x45};
+  const uint8_t modem_config[] = {0x03, 0x00, 0x07};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
+
+  const uint8_t nco_config[] = {0x05, 0xC9, 0xC3, 0x80}; // where?
+  set_properties(Si446x_PROP_MODEM_TX_NCO_MODE_3, nco_config, sizeof(nco_config));
+
+  const uint8_t rate_config[] = {0x00, 0x4E, 0x20};
+  set_properties(Si446x_PROP_MODEM_DATA_RATE_2, rate_config, sizeof(rate_config));
+
+  const uint8_t fdev_config[] = {0x00, 0x00, 0x46};
+  set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, fdev_config, sizeof(fdev_config));
 
   const uint8_t freq_config[] = {0x39, 0x9, 0xB4, 0xE8};
   set_properties(Si446x_PROP_FREQ_CONTROL_INTE, freq_config, sizeof(freq_config));
 
-  const uint8_t band_config[] = {0xA};
+  const uint8_t band_config[] = {0xA}; // where?
   set_properties(Si446x_PROP_MODEM_CLKGEN_BAND, band_config, sizeof(band_config));
+
+  /* Packet configuration */
+
+  // const uint8_t preamble_len[] = {0x04}; // where?
+  // set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble_len, sizeof(preamble_len));
 }

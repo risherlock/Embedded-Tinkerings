@@ -22,7 +22,8 @@ libs/si446x/mini_morse.c \
 libs/si446x/radio.c \
 libs/si446x/si446x/si446x_ctrl.c \
 libs/si446x/si446x_hal.c \
-main_si446x.c
+libs/lsm6ds0/lsm6ds0.c \
+main_lsm6ds0.c
 
 # CPU sources
 CPP_SOURCES = \
@@ -34,7 +35,8 @@ C_INCLUDES =  \
 -Ilibs/uart \
 -Ilibs/util \
 -Ilibs/delay \
--Ilibs/si446x
+-Ilibs/si446x \
+-Ilibs/lsm6ds0
 
 # ASM sources
 ASM_SOURCES =  \

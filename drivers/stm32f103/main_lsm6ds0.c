@@ -7,6 +7,7 @@ int main()
 {
   delay_init();
   usart_init(115200);
+  usart_txln("Namaste!");
 
   if(!lsm6ds0_init())
   {

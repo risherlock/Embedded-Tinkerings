@@ -1,49 +1,20 @@
 #ifndef _LSM6DS0_SETTINGS_H_
 #define _LSM6DS0_SETTINGS_H_
 
-// WHO_AM_I & responses
-#define LSM6DS0_WHO_AM_I 0x0F
+#define LSM6DS0_I2C_SLAVE_ADD 0x6B
+
+// WHO_AM_I & response
 #define LSM6DS0_WHO_AM_I_VAL 0x6C
-#define LSM6DS0_G_RESPONSE 0x68
-#define LSM6DS0_XM_RESPONSE 0x3D
+#define LSM6DS0_WHO_AM_I 0x0F
 
-// I2C address
-#define LSM6DS0_ADDR_AG 0x6B
-#define LSM6DS0_ADDR_M 0x1E
-
-// Output & calibration registers
+// Output  registers
 #define LSM6DS0_OUT_X_L_XL 0x28
-#define LSM6DS0_OUT_X_L_G 0x18
-#define LSM6DS0_OUT_X_L_M 0x28
-#define LSM6DS0_OFFSET_X_REG_L_M 0x05
+#define LSM6DS0_OUT_X_L_G 0x22
+#define LSM6DS0_OUT_TEMP_L 0x20
 
-// Gyro control registers
-#define LSM6DS0_CTRL_REG1_G 0x10
-#define LSM6DS0_CTRL_REG2_G 0x11
-#define LSM6DS0_CTRL_REG3_G 0x12
-#define LSM6DS0_CTRL_REG4 0x1E
-
-// Accelerometer control registers
-#define LSM6DS0_CTRL_REG5_XL 0x1F
-#define LSM6DS0_CTRL_REG6_XL 0x20
-#define LSM6DS0_CTRL_REG7_XL 0x21
-
-// Magnetometer control registers
-#define LSM6DS0_CTRL_REG1_M 0x20
-#define LSM6DS0_CTRL_REG2_M 0x21
-#define LSM6DS0_CTRL_REG3_M 0x22
-#define LSM6DS0_CTRL_REG4_M 0x23
-#define LSM6DS0_CTRL_REG5_M 0x24
-
-// General control registers
-#define LSM6DS0_CTRL_REG8 0x22
-#define LSM6DS0_CTRL_REG9 0x23
-#define LSM6DS0_CTRL_REG10 0x24
-
-// Status registers
-#define LSM6DS0_STATUS_REG_G 0x17
-#define LSM6DS0_STATUS_REG_XL 0x26
-#define LSM6DS0_STATUS_REG_M 0x27
+// Control registers
+#define LSM6DS0_CTRL1_XL 0x10
+#define LSM6DS0_CTRL2_G 0x11
 
 // Linear Acceleration: milli g's per LSB
 #define LSM6DS0_ACCEL_mg_LSB_2G 0.061F  // +-2g

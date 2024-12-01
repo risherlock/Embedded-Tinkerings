@@ -8,7 +8,7 @@
 bool lsm6ds0_init(void);
 bool lsm6ds0_get_accel(float a[3]);
 bool lsm6ds0_get_gyro(float g[3]);
-float get_temperature(void);
+bool lsm6ds0_get_temperature(float *t);
 
 #endif // lsm6ds0.h
 

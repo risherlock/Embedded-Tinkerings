@@ -8,8 +8,8 @@ extern "C" {
 #include <inttypes.h>
 
 void usart_init(const uint32_t baud_rate);
+void usart_tx_int(const int num);
 void usart_tx(const char *msg);
-void usart_txln(const char *msg);
 
 #ifdef __cplusplus
 }

@@ -23,19 +23,9 @@ void usart_tx(const char *msg)
   }
 }
 
-void usart_txln(const char *msg)
+void usart_tx_int(const int num)
 {
-  while(*msg)
-  {
-    while (!(USART1->SR & USART_SR_TXE));
-    USART1->DR = *msg;
-    msg++;
-  }
-
-  const char nlcr[] = "\r\n";
-  for(uint8_t i = 0; i < 2; i++)
-  {
-    while (!(USART1->SR & USART_SR_TXE));
-    USART1->DR = nlcr[i];
-  }
+  char str[20];
+  itoa(num, str, 10);
+  usart_tx(str);
 }

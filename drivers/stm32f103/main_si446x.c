@@ -7,10 +7,15 @@
 #include "si446x_hal.h"
 #include "mini_morse.h"
 
+/*
+  Todos:
+  1. TX complete interrupt test.
+  2. Current problem with "Hello, World!"
+*/
 #include <inttypes.h>
 
-const uint8_t radio_msg1[] = "Namaste!";
-const uint8_t radio_msg2[] = "Hello, World!";
+const uint8_t radio_msg1[] = "01234567890876543210?";
+const uint8_t radio_msg2[] = "abcdefghijklmnopqrstuvwxyz!";
 
 void tx_gfsk(const uint8_t *data, const uint8_t n);
 
@@ -28,8 +33,8 @@ int main()
   }
 
   usart_txln("Radio success!");
-  radio_init_morse();
-  mini_morse_tx(radio_msg1, sizeof(radio_msg1));
+  // radio_init_morse();
+  // mini_morse_tx(radio_msg1, sizeof(radio_msg1));
 
   radio_init_gfsk();
   uint8_t msg_flag = 1;

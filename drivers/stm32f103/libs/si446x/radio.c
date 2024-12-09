@@ -7,14 +7,41 @@
 
 #define RADIO_PAYLOAD_LENGTH 255
 
+volatile RadioState current_radio_state = READY;
+
+void radio_init_interrupt(void)
+{
+  // Configure PB1 as input with pull-down
+  RCC->APB2ENR |= RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN;
+  GPIOB->CRL &= ~(GPIO_CRL_MODE1);
+  GPIOB->CRL &= ~(GPIO_CRL_CNF1);
+  GPIOB->CRL |= GPIO_CRL_CNF1_1;
+  GPIOB->ODR |= GPIO_ODR_ODR1;
+
+  // Map PB1 to EXTI1
+  AFIO->EXTICR[0] &= ~(AFIO_EXTICR1_EXTI1);
+  AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI1_PB;
+
+  // EXTI1 as falling edge trigger
+  EXTI->IMR |= EXTI_IMR_MR1;
+  EXTI->RTSR &= ~(EXTI_RTSR_TR1);
+  EXTI->FTSR |= EXTI_FTSR_TR1;
+
+  // Enable EXTI1 interrupt in NVIC
+  NVIC_SetPriority(EXTI1_IRQn, 2);
+  NVIC_EnableIRQ(EXTI1_IRQn);
+}
+
 uint16_t radio_get_id(void)
 {
-  uint8_t part_info[4] = {0};
   si446x_ctrl_send_cmd(Si446x_CMD_PART_INFO);
+
+  uint8_t part_info[4] = {0};
   if (si446x_ctrl_get_response(part_info, sizeof(part_info)))
   {
     return (part_info[2] << 8) + part_info[3];
   }
+
   return 0;
 }
 
@@ -23,28 +50,20 @@ uint8_t radio_init(void)
   si446x_hal_init();
   delay_ms(10);
 
-  if (radio_get_id() != Si446x_CONF_ID)
-  {
-    return 0;
-  }
-
+  // Re-start and start-up sequence
   radio_reset();
-
-  // Start-up sequence
   const uint8_t cmd[] = {0x01, 0x00, 0x01, 0xC9, 0xC3, 0x80};
   si446x_ctrl_send_cmd_stream(Si446x_CMD_POWER_UP, cmd, sizeof(cmd));
   si446x_ctrl_wait_cts(); // May take longer to set the CTS bit
 
-  // Clear all interrupts
-  const uint8_t clear_int[] = {0x00, 0x00, 0x00};
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_GET_INT_STATUS, clear_int, sizeof(clear_int));
-
-  // Initialize interrupt
-  const uint8_t initint[] = {RF4463_MODEM_INT_STATUS_EN | RF4463_PH_INT_STATUS_EN, 0xff, 0xff, 0x00};
-  set_properties(Si446x_PROP_INT_CTL_ENABLE, initint, sizeof(initint));
-
   set_properties(Si446x_PROP_GLOBAL_XO_TUNE, (const uint8_t[]){98}, 1);
   radio_set_power(127);
+  radio_init_interrupt();
+
+  if (radio_get_id() != Si446x_CONF_ID)
+  {
+    return 0;
+  }
 
   return 1;
 }
@@ -52,9 +71,9 @@ uint8_t radio_init(void)
 void radio_reset(void)
 {
   si446x_hal_sdn_high();
-  delay_ms(100);
+  delay_ms(150);
   si446x_hal_sdn_low();
-  delay_ms(20);
+  delay_ms(150);
 }
 
 void radio_sleep(void)
@@ -75,20 +94,6 @@ void radio_set_state(RadioState s)
   const uint8_t cmd = (uint8_t)s;
   si446x_ctrl_send_cmd_stream(Si446x_CMD_CHANGE_STATE, &cmd, 1);
   si446x_ctrl_wait_cts();
-}
-
-void radio_start_tx()
-{
-  uint8_t rf_config[] = {0x00, 0x30, 0x00, 0x00};
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_START_TX, rf_config, sizeof(rf_config));
-  // si446x_ctrl_wait_cts();
-}
-
-void radio_start_rx()
-{
-  uint8_t rf_config[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x08};
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_START_RX, rf_config, sizeof(rf_config));
-  // si446x_ctrl_wait_cts();
 }
 
 void print_state()
@@ -124,47 +129,6 @@ void print_state()
   default:
     break;
   }
-}
-
-#include <string.h>
-void radio_tx(const uint8_t *buffer, const uint16_t len)
-{
-  radio_set_state(SPI_ACTIVE);
-  const uint8_t data = 0x03;
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, &data, sizeof(data));
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_WRITE_TX_FIFO, buffer, len);
-  radio_start_tx();
-
-  while (!radio_get_interrupt_status(5, 6)); // PACKET_SENT?
-  radio_clear_interrupt_status(2, 6); // PACKET_SENT_PEND_CLR
-}
-
-/**
- * @brief Get specific status from the resonse stream of Si446x_CMD_GET_INT_STATUS
- * @note PACKET_SENT status is 6th bit of 5th byte of the response stream.
- *  Therefore to get the PACKET_SENT status: byte = 5 and bit = 6.
- */
-uint8_t radio_get_interrupt_status(const uint8_t byte, const uint8_t bit)
-{
-  uint8_t rsp[9] = {0};
-  const uint8_t cmd[3] = {0xff, 0xff, 0xff};
-
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_GET_INT_STATUS, cmd, sizeof(cmd));
-  si446x_ctrl_get_response(rsp, sizeof(rsp));
-
-  return (rsp[byte - 1] >> (bit - 1)) & 0x1;
-}
-
-/**
- * @brief Change specific pending interrupt.
- * @note PACKET_SENT_PEND_CLR is 6th bit of 2th byte of the response stream.
- *  Therefore to clear the PACKET_SENT_PEND_CLR: byte = 2 and bit = 6.
- */
-void radio_clear_interrupt_status(const uint8_t byte, const uint8_t bit)
-{
-  uint8_t cmd[3] = {0xff, 0xff, 0xff};
-  cmd[byte - 1] &= ~(1 << (bit - 1));
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_GET_INT_STATUS, cmd, sizeof(cmd));
 }
 
 uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len)
@@ -210,9 +174,6 @@ void radio_init_gfsk(void)
 {
   /* Modem configuration */
 
-  // const uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
-  // set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
-
   const uint8_t modem_config[] = {0x03};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
 
@@ -233,23 +194,30 @@ void radio_init_gfsk(void)
 
   /* Packet configuration */
 
-  // Sync words
-  set_properties(Si446x_PROP_SYNC_CONFIG, (const uint8_t[]){0x02-1}, 1);
+  const uint8_t initint[] = {RF4463_MODEM_INT_STATUS_EN | RF4463_PH_INT_STATUS_EN, 0xff, 0xff, 0x00};
+  set_properties(Si446x_PROP_INT_CTL_ENABLE, initint, sizeof(initint));
 
-  const uint8_t crc_config[] = {RF4463_CRC_SEED_ALL_1S | RF4463_CRC_CCITT};
+  const uint8_t clear_int[] = {0x00, 0x00, 0x00};
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_GET_INT_STATUS, clear_int, sizeof(clear_int));
+
+  const uint8_t sync_word_len = 2;
+  const uint8_t sync_word[] = {sync_word_len-1, 0x2d, 0xd4, 0x00, 0x00};
+  set_properties(Si446x_PROP_SYNC_CONFIG, sync_word, sizeof(sync_word));
+
+  const uint8_t crc_config[] = {RF4463_CRC_CCITT | RF4463_CRC_SEED_ALL_1S};
   set_properties(Si446x_PROP_PKT_CRC_CONFIG, crc_config, sizeof(crc_config));
 
-  const uint8_t preamble_len[] = {0x04};
-  set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble_len, sizeof(preamble_len));
-
-  const uint8_t preamble_config[] = {RF4463_PREAMBLE_FIRST_1 |
+  const uint8_t preamble_len = 4;
+  const uint8_t preamble_config[] = {preamble_len, 0x14, 0x00, 0x00,
+                                     RF4463_PREAMBLE_FIRST_1 |
                                      RF4463_PREAMBLE_LENGTH_BYTES |
                                      RF4463_PREAMBLE_STANDARD_1010};
-  set_properties(Si446x_PROP_PREAMBLE_CONFIG, preamble_config, sizeof(preamble_config));
+  set_properties(Si446x_PROP_PREAMBLE_TX_LENGTH, preamble_config, sizeof(preamble_config));
 
-  uint8_t pkt_len[] = {0x02, 0x01, 0x00 };
+  const uint8_t pkt_len[] = {0x02, 0x01, 0x00};
   set_properties(Si446x_PROP_PKT_LEN, pkt_len, sizeof(pkt_len));
 
+  // Header field
   uint8_t pkt_field1[] = {0x00, 0x01, 0x00,
                           RF4463_FIELD_CONFIG_CRC_START |
                           RF4463_FIELD_CONFIG_SEND_CRC |
@@ -257,15 +225,21 @@ void radio_init_gfsk(void)
                           RF4463_FIELD_CONFIG_CRC_ENABLE};
   set_properties(Si446x_PROP_PKT_FIELD_1_LENGTH_12_8, pkt_field1, sizeof(pkt_field1));
 
-  uint8_t pkt_field2[] = {0x00, 0x00, 0x00,
+  // Payload field
+  uint8_t pkt_field2[] = {0x00, 255, 0x00,
                           RF4463_FIELD_CONFIG_CRC_START |
                           RF4463_FIELD_CONFIG_SEND_CRC |
                           RF4463_FIELD_CONFIG_CHECK_CRC |
                           RF4463_FIELD_CONFIG_CRC_ENABLE};
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_12_8, pkt_field2, sizeof(pkt_field2));
+
+  uint8_t pkt_fieldn[] = {0x00, 0x00, 0x00, 0x00};
+  set_properties(Si446x_PROP_PKT_FIELD_3_LENGTH_12_8, pkt_fieldn, sizeof(pkt_fieldn));
+  set_properties(Si446x_PROP_PKT_FIELD_4_LENGTH_12_8, pkt_fieldn, sizeof(pkt_fieldn));
+  set_properties(Si446x_PROP_PKT_FIELD_5_LENGTH_12_8, pkt_fieldn, sizeof(pkt_fieldn));
 }
 
-static uint8_t tx_buffer[256];
+uint8_t tx_buffer[256];
 
 void radio_tx_gfsk(const uint8_t* data, const uint8_t n)
 {
@@ -282,11 +256,42 @@ void radio_tx_gfsk(const uint8_t* data, const uint8_t n)
     tx_buffer[i+5] = data[i];
   }
 
+  // Set lengths and buffers
   si446x_ctrl_send_cmd_stream(Si446x_CMD_WRITE_TX_FIFO, tx_buffer, 1 + 4 + n);
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, (const uint8_t[]){4 + n}, 1);
 
+  // Transmit
   radio_set_state(START_TX);
+  current_radio_state = START_TX;
 
-  // const uint8_t clear_int[] = {0x00, 0x30, 0x00, 0x00};
-  // si446x_ctrl_send_cmd_stream(Si446x_CMD_START_TX, clear_int, sizeof(clear_int));
+  // Wait till Tx complete
+  while(current_radio_state != READY);
+}
+
+// Interrupt handler
+void EXTI1_IRQHandler(void)
+{
+  if (EXTI->PR & EXTI_PR_PR1)
+  {
+    EXTI->PR |= EXTI_PR_PR1;
+
+    uint8_t status[9];
+    si446x_ctrl_send_cmd(Si446x_CMD_GET_INT_STATUS);
+    si446x_ctrl_get_response(status, sizeof(status));
+
+    if(status[0] & RF4463_INT_STATUS_PH_INT_STATUS)
+    {
+      if(status[4] & RF4463_INT_STATUS_PACKET_SENT)
+      {
+        usart_tx("pkt-sent!\n");
+        current_radio_state = READY;
+      }
+
+      if(status[4] & RF4463_INT_STATUS_PACKET_RX)
+      {
+        usart_tx("pkt-received!\n");
+        current_radio_state = READY;
+      }
+    }
+  }
 }

@@ -7,11 +7,6 @@
 #include "si446x_hal.h"
 #include "mini_morse.h"
 
-/*
-  Todos:
-  1. TX complete interrupt test.
-  2. Current problem with "Hello, World!"
-*/
 #include <inttypes.h>
 
 const uint8_t radio_msg1[] = "01234567890876543210?";

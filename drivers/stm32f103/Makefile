@@ -22,7 +22,7 @@ libs/si446x/mini_morse.c \
 libs/si446x/radio.c \
 libs/si446x/si446x/si446x_ctrl.c \
 libs/si446x/si446x_hal.c \
-main_si446x.c
+$(main)
 
 # CPU sources
 CPP_SOURCES = \

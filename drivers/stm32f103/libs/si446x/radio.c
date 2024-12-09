@@ -9,6 +9,22 @@
 
 volatile RadioState current_radio_state = READY;
 
+uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len)
+{
+  uint8_t cmd[15] = {0};
+  cmd[0] = id >> 8;
+  cmd[1] = len;
+  cmd[2] = id & 0xff;
+
+  for (uint8_t i = 0; i < len; i++)
+  {
+    cmd[i + 3] = buff[i];
+  }
+
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_SET_PROPERTY, cmd, len + 3);
+  return si446x_ctrl_wait_cts();
+}
+
 void radio_init_interrupt(void)
 {
   // Configure PB1 as input with pull-down
@@ -129,22 +145,6 @@ void print_state()
   default:
     break;
   }
-}
-
-uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len)
-{
-  uint8_t cmd[15] = {0};
-  cmd[0] = id >> 8;
-  cmd[1] = len;
-  cmd[2] = id & 0xff;
-
-  for (uint8_t i = 0; i < len; i++)
-  {
-    cmd[i + 3] = buff[i];
-  }
-
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_SET_PROPERTY, cmd, len + 3);
-  return si446x_ctrl_wait_cts();
 }
 
 void radio_set_power(uint8_t power)

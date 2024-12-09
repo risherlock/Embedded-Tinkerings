@@ -22,22 +22,19 @@ typedef enum RadioStateEnum
   START_RX = 0x08
 }RadioState;
 
-uint8_t radio_init(void);
-void radio_reset(void);
 void radio_sleep(void);
+uint8_t radio_init(void);
 
+uint8_t radio_available(void);
 RadioState radio_get_state(void);
 void radio_set_state(RadioState s);
-uint8_t radio_get_interrupt_status(const uint8_t byte, const uint8_t bit);
-void radio_clear_interrupt_status(const uint8_t byte, const uint8_t bit);
-
-void radio_set_frequency(void);
 void radio_set_power(uint8_t power);
-void radio_configure_packet(void);
-uint8_t set_properties(const uint16_t id, const uint8_t *buff, const uint8_t len);
 
-void radio_init_morse(void);
 void radio_init_gfsk(void);
+void radio_init_morse(void);
+void radio_set_rx_mode(void);
+void radio_set_tx_mode(void);
+uint8_t radio_rx_gfsk(uint8_t* data, uint8_t n);
 void radio_tx_gfsk(const uint8_t* data, const uint8_t n);
 
 #endif // radio.h

@@ -125,7 +125,7 @@ $(BUILD_DIR):
 	mkdir $@ #
 
 # Flash the hex
-flash: all
+flash: clean all
 	openocd -f interface/stlink.cfg -f target/stm32f1x.cfg -c "program $(BUILD_DIR)/$(TARGET).hex verify reset exit"
 
 # Delete build directory

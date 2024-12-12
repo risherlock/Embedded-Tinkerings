@@ -176,7 +176,7 @@ bool lsm6ds0_get_temperature(float *t)
   i2c1_read_burst(LSM6DS0_OUT_TEMP_L, data, 2);
 
   float t_lsb = data[0] / 256.0f;
-  *t = (float)data[1] + t_lsb + 25;
+  *t = (int8_t)data[1] + t_lsb + 25;
 
   return true;
 }

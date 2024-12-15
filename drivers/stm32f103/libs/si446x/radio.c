@@ -400,6 +400,7 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(void)
 {
+  
   // if (current_radio_state != START_RX)
   // {
 	  const uint8_t max_rx_len[] = {50};
@@ -448,9 +449,89 @@ void radio_set_rx_mode(void)
     uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
     set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
-    uint8_t bcr[] = {0x00, 0xC8, 0x02, 0x8F, 0x5C, 0x01, 0x48, 0x02, 0xC2};
+    uint8_t bcr[] = {0x00, 0xC8, 0x00, 0xA7, 0xC6, 0x00, 0x54, 0x02, 0xC2, 0x00};
     set_properties(0x2022, bcr, sizeof(bcr));
-
+set_properties(0x2000, (uint8_t []){0x03}, 1);
+set_properties(0x2003, (uint8_t []){0x00}, 1);
+set_properties(0x2004, (uint8_t []){0x4e}, 1);
+set_properties(0x2005, (uint8_t []){0x20}, 1);
+set_properties(0x2006, (uint8_t []){0x05}, 1);
+set_properties(0x200a, (uint8_t []){0x00}, 1);
+set_properties(0x200b, (uint8_t []){0x00}, 1);
+set_properties(0x200c, (uint8_t []){0x46}, 1);
+set_properties(0x2018, (uint8_t []){0x01}, 1);
+set_properties(0x201e, (uint8_t []){0x34}, 1);
+set_properties(0x201f, (uint8_t []){0x11}, 1);
+set_properties(0x2022, (uint8_t []){0x02}, 1);
+set_properties(0x2023, (uint8_t []){0x71}, 1);
+set_properties(0x2024, (uint8_t []){0x00}, 1);
+set_properties(0x2025, (uint8_t []){0xd1}, 1);
+set_properties(0x2026, (uint8_t []){0xb7}, 1);
+set_properties(0x2027, (uint8_t []){0x00}, 1);
+set_properties(0x2028, (uint8_t []){0x69}, 1);
+set_properties(0x2029, (uint8_t []){0x02}, 1);
+set_properties(0x202d, (uint8_t []){0x36}, 1);
+set_properties(0x202e, (uint8_t []){0x80}, 1);
+set_properties(0x202f, (uint8_t []){0x01}, 1);
+set_properties(0x2030, (uint8_t []){0x5a}, 1);
+set_properties(0x2031, (uint8_t []){0xfc}, 1);
+set_properties(0x2035, (uint8_t []){0xe2}, 1);
+set_properties(0x2038, (uint8_t []){0x11}, 1);
+set_properties(0x2039, (uint8_t []){0x89}, 1);
+set_properties(0x203a, (uint8_t []){0x89}, 1);
+set_properties(0x203b, (uint8_t []){0x00}, 1);
+set_properties(0x203c, (uint8_t []){0x1a}, 1);
+set_properties(0x203d, (uint8_t []){0xff}, 1);
+set_properties(0x203e, (uint8_t []){0xff}, 1);
+set_properties(0x203f, (uint8_t []){0x00}, 1);
+set_properties(0x2040, (uint8_t []){0x2b}, 1);
+set_properties(0x2043, (uint8_t []){0x02}, 1);
+set_properties(0x2045, (uint8_t []){0x81}, 1);
+set_properties(0x2046, (uint8_t []){0x00}, 1);
+set_properties(0x2047, (uint8_t []){0x68}, 1);
+set_properties(0x204e, (uint8_t []){0x3a}, 1);
+set_properties(0x2100, (uint8_t []){0xff}, 1);
+set_properties(0x2101, (uint8_t []){0xba}, 1);
+set_properties(0x2102, (uint8_t []){0x0f}, 1);
+set_properties(0x2103, (uint8_t []){0x51}, 1);
+set_properties(0x2104, (uint8_t []){0xcf}, 1);
+set_properties(0x2105, (uint8_t []){0xa9}, 1);
+set_properties(0x2106, (uint8_t []){0xc9}, 1);
+set_properties(0x2107, (uint8_t []){0xfc}, 1);
+set_properties(0x2108, (uint8_t []){0x1b}, 1);
+set_properties(0x2109, (uint8_t []){0x1e}, 1);
+set_properties(0x210a, (uint8_t []){0x0f}, 1);
+set_properties(0x210b, (uint8_t []){0x01}, 1);
+set_properties(0x210c, (uint8_t []){0xfc}, 1);
+set_properties(0x210d, (uint8_t []){0xfd}, 1);
+set_properties(0x210e, (uint8_t []){0x15}, 1);
+set_properties(0x210f, (uint8_t []){0xff}, 1);
+set_properties(0x2110, (uint8_t []){0x00}, 1);
+set_properties(0x2111, (uint8_t []){0x0f}, 1);
+set_properties(0x2112, (uint8_t []){0xff}, 1);
+set_properties(0x2113, (uint8_t []){0xba}, 1);
+set_properties(0x2114, (uint8_t []){0x0f}, 1);
+set_properties(0x2115, (uint8_t []){0x51}, 1);
+set_properties(0x2116, (uint8_t []){0xcf}, 1);
+set_properties(0x2117, (uint8_t []){0xa9}, 1);
+set_properties(0x2118, (uint8_t []){0xc9}, 1);
+set_properties(0x2119, (uint8_t []){0xfc}, 1);
+set_properties(0x211a, (uint8_t []){0x1b}, 1);
+set_properties(0x211b, (uint8_t []){0x1e}, 1);
+set_properties(0x211c, (uint8_t []){0x0f}, 1);
+set_properties(0x211d, (uint8_t []){0x01}, 1);
+set_properties(0x211e, (uint8_t []){0xfc}, 1);
+set_properties(0x211f, (uint8_t []){0xfd}, 1);
+set_properties(0x2120, (uint8_t []){0x15}, 1);
+set_properties(0x2121, (uint8_t []){0xff}, 1);
+set_properties(0x2122, (uint8_t []){0x00}, 1);
+set_properties(0x2123, (uint8_t []){0x0f}, 1);
+set_properties(0x2203, (uint8_t []){0x3f}, 1);
+set_properties(0x2300, (uint8_t []){0x2c}, 1);
+set_properties(0x2301, (uint8_t []){0x0e}, 1);
+set_properties(0x2303, (uint8_t []){0x04}, 1);
+set_properties(0x2304, (uint8_t []){0x0c}, 1);
+set_properties(0x2305, (uint8_t []){0x73}, 1);
     radio_set_state(START_RX);
 	  current_radio_state = START_RX;
 

@@ -26,12 +26,12 @@ int main()
 
   while (1)
   {
-    // while (radio_available())
-    // {
-    //   if (radio_rx_gfsk(rx_msg, sizeof(rx_msg)))
-    //   {
-    //   }
-    // }
+    if (radio_available())
+    {
+      if (radio_rx_gfsk(rx_msg, sizeof(rx_msg)))
+      {
+      }
+    }
   }
 
   return 0;

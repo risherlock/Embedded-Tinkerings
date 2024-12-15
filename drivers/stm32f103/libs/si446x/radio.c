@@ -355,45 +355,30 @@ void EXTI1_IRQHandler(void)
     if(radio_interrupts.packet_rx)
     {
       usart_tx("pkt-rx!\n");
+      current_radio_state = READY;
     }
 
-    if(radio_interrupts.crc_error)
+    if (radio_interrupts.packet_rx ||
+        radio_interrupts.crc_error ||
+        radio_interrupts.invalid_sync ||
+        radio_interrupts.invalid_preamble)
     {
-      usart_tx("crc-error!\n");
-    }
-
-    if(radio_interrupts.invalid_sync)
-    {
-      usart_tx("pkt-invalid-sync!\n");
-    }
-
-    if(radio_interrupts.invalid_preamble)
-    {
-      usart_tx("pkt-invalid-preamble!\n");
-    }
-
-    if(radio_interrupts.sync_detect)
-    {
-      usart_tx("pkt-detect-sync!\n");
-    }
-
-    if(radio_interrupts.preamble_detect)
-    {
-      usart_tx("pkt-detect-preamble!\n");
+      current_radio_state = READY;
     }
   }
 }
 
 uint8_t radio_available(void)
 {
-  if(current_radio_state == START_TX)
+  // Radio is engaged
+  if (current_radio_state == START_RX ||
+      current_radio_state == START_TX)
   {
     return 0;
   }
 
   radio_set_state(START_RX);
   current_radio_state = START_RX;
-  // usart_txln("radio-available!");
 
   return 1;
 }
@@ -442,10 +427,11 @@ uint8_t radio_rx_gfsk(uint8_t* data, uint8_t n)
 
   if(radio_interrupts.packet_rx)
   {
-    // clear_interrupts();
+    clear_interrupts();
     // check packet headers
     // fill in the buffer
-    // START_RX
+
+    radio_set_state(START_RX);
     current_radio_state = START_RX;
 
     return 1;

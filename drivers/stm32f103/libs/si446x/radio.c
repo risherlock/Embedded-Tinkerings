@@ -400,146 +400,37 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(void)
 {
-  
-  // if (current_radio_state != START_RX)
-  // {
-	  const uint8_t max_rx_len[] = {50};
-	  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
+ 	const uint8_t max_rx_len[] = {50};
+	set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
 
-    const uint8_t reset_fifo[] = {0x02};
-    si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
+  const uint8_t reset_fifo[] = {0x02};
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
 
-    const uint8_t rx_int[3] = {0x03, 0x18, 0x00};
-    set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
-    clear_interrupts();
+  const uint8_t rx_int[3] = {0x03, 0x18, 0x00};
+  set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
+  clear_interrupts();
 
-	  uint8_t pin_config[] = {0x14, 0x11, 0x18, 0x1a, 0x00, 0x00, 0x00};
-	  // uint8_t pin_config[] = {3, 2};
-	  // uint8_t pin_config[] = {0x14, 0x13, 0x21, 0x20, 0x00, 0x00};
-	  si446x_ctrl_send_cmd_stream(Si446x_CMD_GPIO_PIN_CFG, pin_config, sizeof(pin_config));
+  uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
+  set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
 
-    set_properties(Si446x_PROP_MODEM_RSSI_COMP, (uint8_t []){0x40}, 1);
+  uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
+  set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
-    uint8_t afc_limiter[] = {0x17, 0x2A, 0x80};
-    set_properties(0x20e0, afc_limiter, sizeof(afc_limiter));
+  uint8_t bcr[] = {0x02, 0x71, 0x00, 0xd1, 0xb7, 0x00};
+  set_properties(Si446x_PROP_MODEM_BCR_OSR_1, bcr, sizeof(bcr));
 
-    uint8_t agc_ctrl[] = {0xE2};
-    set_properties(0x2035, agc_ctrl, sizeof(agc_ctrl));
+  uint8_t mod_decim[] = {0x34, 0x11};
+  set_properties(Si446x_PROP_MODEM_DECIMATION_CFG1, mod_decim, sizeof(mod_decim));
 
-    uint8_t agc_win[] = {0x11, 0xAB, 0xAB, 0x80, 0x1A, 0xFF, 0xFF, 0x00, 0x2B, 0x0C, 0xA4, 0x22};
-    set_properties(0x2038, agc_win, sizeof(agc_win));
+  uint8_t mod_raw[] = {0x56, 0x81, 0x00, 0x68};
+  set_properties(Si446x_PROP_MODEM_RAW_SEARCH, mod_raw, sizeof(mod_raw));
 
-    uint8_t modem_raw_ctrl[] = {0x83, 0x01, 0x55, 0x02, 0x80, 0xFF, 0x08, 0x00};
-    set_properties(0x2045, modem_raw_ctrl, sizeof(modem_raw_ctrl));
+  uint8_t mod_ook[] = {0x0C, 0xA4, 0x22};
+  set_properties(Si446x_PROP_MODEM_OOK_PDTC, mod_ook, sizeof(mod_ook));
 
-    uint8_t modem_raw_search[] = {0x84, 0x0A};
-    set_properties(0x2045, modem_raw_search, sizeof(modem_raw_search));
-
-    uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
-    set_properties(0x2300, synth, sizeof(synth));
-
-    // uint8_t headers[] = {0xff, 0xff, 0x00, 0x00};
-    // uint8_t header_config[] = {headers[0], 0xff, 0x40, headers[1], 0xff, 0x01, headers[2], 0xff, 0x02, headers[3], 0xff, 0x03};
-	  // set_properties(0x3000, header_config, sizeof(header_config));
-
-	  // uint8_t buf[]={0x00,0x00,0x00,0x00,0x00,0x08,0x08};
-	  // si446x_ctrl_send_cmd_stream(Si446x_CMD_START_RX, buf, sizeof(buf));
-
-    // Burst preamble settings
-    uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
-    set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
-
-    // uint8_t bcr[] = {0x00, 0xC8, 0x00, 0xA7, 0xC6, 0x00, 0x54, 0x02, 0xC2, 0x00};
-    // set_properties(0x2022, bcr, sizeof(bcr));
-
-// set_properties(0x2000, (uint8_t []){0x03}, 1);
-// set_properties(0x2003, (uint8_t []){0x00}, 1);
-// set_properties(0x2004, (uint8_t []){0x4e}, 1);
-// set_properties(0x2005, (uint8_t []){0x20}, 1);
-// set_properties(0x2006, (uint8_t []){0x05}, 1);
-// set_properties(0x200a, (uint8_t []){0x00}, 1);
-// set_properties(0x200b, (uint8_t []){0x00}, 1);
-// set_properties(0x200c, (uint8_t []){0x46}, 1);
-// set_properties(0x2018, (uint8_t []){0x01}, 1);
-set_properties(0x201e, (uint8_t []){0x34}, 1); //imp
-set_properties(0x201f, (uint8_t []){0x11}, 1);
-set_properties(0x2022, (uint8_t []){0x02}, 1);
-set_properties(0x2023, (uint8_t []){0x71}, 1);
-set_properties(0x2024, (uint8_t []){0x00}, 1);
-set_properties(0x2025, (uint8_t []){0xd1}, 1);
-set_properties(0x2026, (uint8_t []){0xb7}, 1);
-set_properties(0x2027, (uint8_t []){0x00}, 1); //imp
-// set_properties(0x2028, (uint8_t []){0x69}, 1);
-// set_properties(0x2029, (uint8_t []){0x02}, 1);
-// set_properties(0x202d, (uint8_t []){0x36}, 1);
-// set_properties(0x202e, (uint8_t []){0x80}, 1);
-// set_properties(0x202f, (uint8_t []){0x01}, 1);
-// set_properties(0x2030, (uint8_t []){0x5a}, 1);
-// set_properties(0x2031, (uint8_t []){0xfc}, 1);
-// set_properties(0x2035, (uint8_t []){0xe2}, 1);
-// set_properties(0x2038, (uint8_t []){0x11}, 1);
-// set_properties(0x2039, (uint8_t []){0x89}, 1);
-// set_properties(0x203a, (uint8_t []){0x89}, 1);
-// set_properties(0x203b, (uint8_t []){0x00}, 1);
-// set_properties(0x203c, (uint8_t []){0x1a}, 1);
-// set_properties(0x203d, (uint8_t []){0xff}, 1);
-// set_properties(0x203e, (uint8_t []){0xff}, 1);
-// set_properties(0x203f, (uint8_t []){0x00}, 1);
-// set_properties(0x2040, (uint8_t []){0x2b}, 1);
-// set_properties(0x2043, (uint8_t []){0x02}, 1);
-set_properties(0x2045, (uint8_t []){0x81}, 1);
-// set_properties(0x2046, (uint8_t []){0x00}, 1);
-// set_properties(0x2047, (uint8_t []){0x68}, 1);
-// set_properties(0x204e, (uint8_t []){0x3a}, 1);
-// set_properties(0x2100, (uint8_t []){0xff}, 1);
-// set_properties(0x2101, (uint8_t []){0xba}, 1);
-// set_properties(0x2102, (uint8_t []){0x0f}, 1);
-// set_properties(0x2103, (uint8_t []){0x51}, 1);
-// set_properties(0x2104, (uint8_t []){0xcf}, 1);
-// set_properties(0x2105, (uint8_t []){0xa9}, 1);
-// set_properties(0x2106, (uint8_t []){0xc9}, 1);
-// set_properties(0x2107, (uint8_t []){0xfc}, 1);
-// set_properties(0x2108, (uint8_t []){0x1b}, 1);
-// set_properties(0x2109, (uint8_t []){0x1e}, 1);
-// set_properties(0x210a, (uint8_t []){0x0f}, 1);
-// set_properties(0x210b, (uint8_t []){0x01}, 1);
-// set_properties(0x210c, (uint8_t []){0xfc}, 1);
-// set_properties(0x210d, (uint8_t []){0xfd}, 1);
-// set_properties(0x210e, (uint8_t []){0x15}, 1);
-// set_properties(0x210f, (uint8_t []){0xff}, 1);
-// set_properties(0x2110, (uint8_t []){0x00}, 1);
-// set_properties(0x2111, (uint8_t []){0x0f}, 1);
-// set_properties(0x2112, (uint8_t []){0xff}, 1);
-// set_properties(0x2113, (uint8_t []){0xba}, 1);
-// set_properties(0x2114, (uint8_t []){0x0f}, 1);
-// set_properties(0x2115, (uint8_t []){0x51}, 1);
-// set_properties(0x2116, (uint8_t []){0xcf}, 1);
-// set_properties(0x2117, (uint8_t []){0xa9}, 1);
-// set_properties(0x2118, (uint8_t []){0xc9}, 1);
-// set_properties(0x2119, (uint8_t []){0xfc}, 1);
-// set_properties(0x211a, (uint8_t []){0x1b}, 1);
-// set_properties(0x211b, (uint8_t []){0x1e}, 1);
-// set_properties(0x211c, (uint8_t []){0x0f}, 1);
-// set_properties(0x211d, (uint8_t []){0x01}, 1);
-// set_properties(0x211e, (uint8_t []){0xfc}, 1);
-// set_properties(0x211f, (uint8_t []){0xfd}, 1);
-// set_properties(0x2120, (uint8_t []){0x15}, 1);
-// set_properties(0x2121, (uint8_t []){0xff}, 1);
-// set_properties(0x2122, (uint8_t []){0x00}, 1);
-// set_properties(0x2123, (uint8_t []){0x0f}, 1);
-// set_properties(0x2203, (uint8_t []){0x3f}, 1);
-// set_properties(0x2300, (uint8_t []){0x2c}, 1);
-// set_properties(0x2301, (uint8_t []){0x0e}, 1);
-// set_properties(0x2303, (uint8_t []){0x04}, 1);
-// set_properties(0x2304, (uint8_t []){0x0c}, 1);
-// set_properties(0x2305, (uint8_t []){0x73}, 1);
-    radio_set_state(START_RX);
-	  current_radio_state = START_RX;
-
-    // print_state();
-  // }
+  radio_set_state(START_RX);
+	current_radio_state = START_RX;
 }
-
 
 // Figure 22, an633.pdf
 uint8_t radio_rx_gfsk(uint8_t* data, uint8_t n)

@@ -240,7 +240,7 @@ void radio_init_morse(void)
 void radio_init_gfsk(void)
 {
   /* Modem configuration */
-  // configure_wds();
+  configure_wds();
 
   const uint8_t modem_config[] = {0x03};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
@@ -433,6 +433,16 @@ void radio_set_rx_mode(void)
 
     uint8_t modem_raw_search[] = {0x84, 0x0A};
     set_properties(0x2045, modem_raw_search, sizeof(modem_raw_search));
+
+    uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
+    set_properties(0x2300, synth, sizeof(synth));
+
+    uint8_t headers[] = {0xff, 0xff, 0x00, 0x00};
+    uint8_t header_config[] = {headers[0], 0xff, 0x40, headers[1], 0xff, 0x01, headers[2], 0xff, 0x02, headers[3], 0xff, 0x03};
+	  set_properties(0x3000, header_config, sizeof(header_config));
+
+	  // uint8_t buf[]={0x00,0x00,0x00,0x00,0x00,0x08,0x08};
+	  // si446x_ctrl_send_cmd_stream(Si446x_CMD_START_RX, buf, sizeof(buf));
 
     radio_set_state(START_RX);
 	  current_radio_state = START_RX;

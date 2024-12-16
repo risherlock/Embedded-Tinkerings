@@ -6,16 +6,6 @@
  * @date 2024-09-04
  */
 
-/**
- * @todo
- * 1. outdiv is not same in datasheet and .xlsx calculator.
- * 2. Modem data rate is different for rates more than 200 kbps.
- * 3. pa_clock_duty_cycle and pa_output_bias
- * 4. Make sure to configure GPIO pins for direct mode.
- * 4. Value of band in different frequency.
- * 5. xo_tune and clk_config.
- */
-
 #include <cmath>
 #include <iomanip>
 #include <iostream>

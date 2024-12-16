@@ -5,10 +5,6 @@
  * @date 2023-06-06 02:11:23 PM +0545
 **/
 
-/**
- * @todo Return status by all functions
- */
-
 #ifndef _Si446x_RADIO_H_
 #define _Si446x_RADIO_H_
 

@@ -29,34 +29,34 @@ void read_interrupts(void)
   if(response[0] == 0xFF)
   {
     uint8_t ph_pend = response[4];
-		uint8_t modem_pend = response[6];
-		uint8_t chip_pend = response[8];
+    uint8_t modem_pend = response[6];
+    uint8_t chip_pend = response[8];
 
     // PH pending interrupts
     radio_interrupts.filter_match = ((ph_pend & RF4463_INT_STATUS_FILTER_MATCH) >> 7) & 0x01;
     radio_interrupts.filter_miss = ((ph_pend & RF4463_INT_STATUS_FILTER_MISS) >> 6) & 0x01;
-		radio_interrupts.packet_sent = ((ph_pend & RF4463_INT_STATUS_PACKET_SENT) >> 5) & 0x01;
-		radio_interrupts.packet_rx = ((ph_pend & RF4463_INT_STATUS_PACKET_RX) >> 4) & 0x01;
-		radio_interrupts.crc_error = ((ph_pend & RF4463_INT_STATUS_CRC_ERROR) >> 3) & 0x01;
-		radio_interrupts.tx_fifo_almost_empty = ((ph_pend & RF4463_INT_STATUS_TX_FIFO_ALMOST_EMPTY) >> 1) & 0x01;
-		radio_interrupts.rx_fifo_almost_full = (ph_pend & RF4463_INT_STATUS_RX_FIFO_ALMOST_FULL) & 0x01;
+    radio_interrupts.packet_sent = ((ph_pend & RF4463_INT_STATUS_PACKET_SENT) >> 5) & 0x01;
+    radio_interrupts.packet_rx = ((ph_pend & RF4463_INT_STATUS_PACKET_RX) >> 4) & 0x01;
+    radio_interrupts.crc_error = ((ph_pend & RF4463_INT_STATUS_CRC_ERROR) >> 3) & 0x01;
+    radio_interrupts.tx_fifo_almost_empty = ((ph_pend & RF4463_INT_STATUS_TX_FIFO_ALMOST_EMPTY) >> 1) & 0x01;
+    radio_interrupts.rx_fifo_almost_full = (ph_pend & RF4463_INT_STATUS_RX_FIFO_ALMOST_FULL) & 0x01;
 
     // Modem interrupts
-		radio_interrupts.invalid_sync = ((modem_pend & RF4463_INT_STATUS_INVALID_SYNC) >> 5) & 0x01;
-		radio_interrupts.rssi_jump = ((modem_pend & RF4463_INT_STATUS_RSSI_JUMP) >> 4) & 0x01;
-		radio_interrupts.rssi = ((modem_pend & RF4463_INT_STATUS_RSSI) >> 3) & 0x01;
-		radio_interrupts.invalid_preamble = ((modem_pend & RF4463_INT_STATUS_INVALID_PREAMBLE) >> 2) & 0x01;
-		radio_interrupts.preamble_detect = ((modem_pend & RF4463_INT_STATUS_PREAMBLE_DETECT) >> 1) & 0x01;
-		radio_interrupts.sync_detect = (modem_pend & RF4463_INT_STATUS_SYNC_DETECT) & 0x01;
+    radio_interrupts.invalid_sync = ((modem_pend & RF4463_INT_STATUS_INVALID_SYNC) >> 5) & 0x01;
+    radio_interrupts.rssi_jump = ((modem_pend & RF4463_INT_STATUS_RSSI_JUMP) >> 4) & 0x01;
+    radio_interrupts.rssi = ((modem_pend & RF4463_INT_STATUS_RSSI) >> 3) & 0x01;
+    radio_interrupts.invalid_preamble = ((modem_pend & RF4463_INT_STATUS_INVALID_PREAMBLE) >> 2) & 0x01;
+    radio_interrupts.preamble_detect = ((modem_pend & RF4463_INT_STATUS_PREAMBLE_DETECT) >> 1) & 0x01;
+    radio_interrupts.sync_detect = (modem_pend & RF4463_INT_STATUS_SYNC_DETECT) & 0x01;
 
     // Chip interrupts
     radio_interrupts.cal = ((chip_pend & RF4463_INT_STATUS_CAL) >> 6) & 0x01;
-		radio_interrupts.fifo_underflow_overflow_error = ((chip_pend & RF4463_INT_STATUS_FIFO_UNDERFLOW_OVERFLOW_ERROR) >> 5) & 0x01;
-		radio_interrupts.state_change = ((chip_pend & RF4463_INT_STATUS_STATE_CHANGE) >> 4) & 0x01;
-		radio_interrupts.cmd_error = ((chip_pend & RF4463_INT_STATUS_CMD_ERROR) >> 3) & 0x01;
-		radio_interrupts.chip_ready = ((chip_pend & RF4463_INT_STATUS_CHIP_READY) >> 2) & 0x01;
-		radio_interrupts.low_batt = ((chip_pend & RF4463_INT_STATUS_LOW_BATT) >> 1) & 0x01;
-		radio_interrupts.wut = (chip_pend & RF4463_INT_STATUS_WUT) & 0x01;
+    radio_interrupts.fifo_underflow_overflow_error = ((chip_pend & RF4463_INT_STATUS_FIFO_UNDERFLOW_OVERFLOW_ERROR) >> 5) & 0x01;
+    radio_interrupts.state_change = ((chip_pend & RF4463_INT_STATUS_STATE_CHANGE) >> 4) & 0x01;
+    radio_interrupts.cmd_error = ((chip_pend & RF4463_INT_STATUS_CMD_ERROR) >> 3) & 0x01;
+    radio_interrupts.chip_ready = ((chip_pend & RF4463_INT_STATUS_CHIP_READY) >> 2) & 0x01;
+    radio_interrupts.low_batt = ((chip_pend & RF4463_INT_STATUS_LOW_BATT) >> 1) & 0x01;
+    radio_interrupts.wut = (chip_pend & RF4463_INT_STATUS_WUT) & 0x01;
   }
 }
 
@@ -158,7 +158,6 @@ uint8_t radio_init(void)
   return 1;
 }
 
-
 void radio_sleep(void)
 {
   si446x_hal_sdn_high();
@@ -240,7 +239,6 @@ void radio_init_morse(void)
 void radio_init_gfsk(void)
 {
   /* Modem configuration */
-  // configure_wds();
 
   const uint8_t modem_config[] = {0x03};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
@@ -358,6 +356,31 @@ void EXTI1_IRQHandler(void)
       current_radio_state = READY;
     }
 
+    if(radio_interrupts.preamble_detect)
+    {
+      usart_tx("preamble-detected!\n");
+    }
+
+    if(radio_interrupts.sync_detect)
+    {
+      usart_tx("sync-detected!\n");
+    }
+
+    if(radio_interrupts.crc_error)
+    {
+      usart_tx("crc-error!\n");
+    }
+
+    if(radio_interrupts.invalid_sync)
+    {
+      usart_tx("invalid-sync!\n");
+    }
+
+    if(radio_interrupts.invalid_preamble)
+    {
+      usart_tx("invalid-preamble!\n");
+    }
+
     if (radio_interrupts.packet_rx ||
         radio_interrupts.crc_error ||
         radio_interrupts.invalid_sync ||
@@ -385,8 +408,8 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(void)
 {
- 	const uint8_t max_rx_len[] = {50};
-	set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
+   const uint8_t max_rx_len[] = {50};
+  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
 
   const uint8_t reset_fifo[] = {0x02};
   si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
@@ -414,7 +437,7 @@ void radio_set_rx_mode(void)
   set_properties(Si446x_PROP_MODEM_OOK_PDTC, mod_ook, sizeof(mod_ook));
 
   radio_set_state(START_RX);
-	current_radio_state = START_RX;
+  current_radio_state = START_RX;
 }
 
 // Figure 22, an633.pdf

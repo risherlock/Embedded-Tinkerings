@@ -29,31 +29,31 @@ typedef enum
 
 typedef struct
 {
-	// PH interrupts
-	bool filter_match;
-	bool filter_miss;
-	bool packet_sent;
-	bool packet_rx;
-	bool crc_error;
-	bool tx_fifo_almost_empty;
-	bool rx_fifo_almost_full;
+  // PH interrupts
+  bool filter_match;
+  bool filter_miss;
+  bool packet_sent;
+  bool packet_rx;
+  bool crc_error;
+  bool tx_fifo_almost_empty;
+  bool rx_fifo_almost_full;
 
-	// Modem interrupts
-	bool invalid_sync;
-	bool rssi_jump;
-	bool rssi;
-	bool invalid_preamble;
-	bool preamble_detect;
-	bool sync_detect;
+  // Modem interrupts
+  bool invalid_sync;
+  bool rssi_jump;
+  bool rssi;
+  bool invalid_preamble;
+  bool preamble_detect;
+  bool sync_detect;
 
-	// Chip interrupts
-	bool cal;
-	bool fifo_underflow_overflow_error;
-	bool state_change;
-	bool cmd_error;
-	bool chip_ready;
-	bool low_batt;
-	bool wut;
+  // Chip interrupts
+  bool cal;
+  bool fifo_underflow_overflow_error;
+  bool state_change;
+  bool cmd_error;
+  bool chip_ready;
+  bool low_batt;
+  bool wut;
 } radio_interrupts_t;
 
 extern radio_interrupts_t radio_interrupts;

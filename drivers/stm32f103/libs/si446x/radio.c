@@ -353,7 +353,6 @@ void EXTI1_IRQHandler(void)
     if(radio_interrupts.packet_rx)
     {
       usart_tx("pkt-rx!\n");
-      current_radio_state = READY;
     }
 
     if(radio_interrupts.preamble_detect)
@@ -381,6 +380,7 @@ void EXTI1_IRQHandler(void)
       usart_tx("invalid-preamble!\n");
     }
 
+    // State changes to READY after interrupt
     if (radio_interrupts.packet_rx ||
         radio_interrupts.crc_error ||
         radio_interrupts.invalid_sync ||
@@ -408,7 +408,7 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(void)
 {
-   const uint8_t max_rx_len[] = {50};
+  const uint8_t max_rx_len[] = {50};
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
 
   const uint8_t reset_fifo[] = {0x02};
@@ -441,24 +441,38 @@ void radio_set_rx_mode(void)
 }
 
 // Figure 22, an633.pdf
-uint8_t radio_rx_gfsk(uint8_t* data, uint8_t n)
+bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
 {
   if(!radio_available())
   {
-    return 0;
+    return false;
   }
 
+  // Has interrupt fired?
   if(radio_interrupts.packet_rx)
   {
     clear_interrupts();
-    // check packet headers
-    // fill in the buffer
+
+    // Get length
+    uint8_t fifo_info[1] = {0};
+    si446x_ctrl_send_cmd(Si446x_CMD_FIFO_INFO);
+    si446x_ctrl_get_response(fifo_info, sizeof(fifo_info));
+    *rx_len = fifo_info[0];
+
+    if (*rx_len > 0)
+    {
+      si446x_ctrl_read_rx_fifo(buff, buff_len);
+    }
+    else
+    {
+      return false;
+    }
 
     radio_set_state(START_RX);
     current_radio_state = START_RX;
 
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }

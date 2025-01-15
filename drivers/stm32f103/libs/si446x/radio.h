@@ -66,7 +66,7 @@ void radio_init_gfsk(void);
 void radio_init_morse(void);
 void radio_set_rx_mode(void);
 void radio_set_tx_mode(void);
-uint8_t radio_rx_gfsk(uint8_t* data, uint8_t n);
+bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len);
 void radio_tx_gfsk(const uint8_t* data, const uint8_t n);
 
 #endif // radio.h

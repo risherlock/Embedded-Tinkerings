@@ -6,6 +6,7 @@
 #include <inttypes.h>
 
 uint8_t rx_msg[100];
+uint8_t len;
 
 int main()
 {
@@ -26,11 +27,11 @@ int main()
 
   while (1)
   {
-    if (radio_available())
+    if (radio_rx_gfsk(rx_msg, sizeof(rx_msg), &len))
     {
-      if (radio_rx_gfsk(rx_msg, sizeof(rx_msg)))
-      {
-      }
+      usart_tx("Received packet: ");
+      usart_tx((char *)rx_msg + 4);
+      usart_tx("\n");
     }
   }
 

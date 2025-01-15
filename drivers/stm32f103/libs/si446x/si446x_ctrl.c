@@ -42,6 +42,14 @@ void si446x_ctrl_send_cmd(const uint8_t cmd)
   si446x_ctrl_wait_cts();
 }
 
+void si446x_ctrl_read_rx_fifo(uint8_t *buffer, const uint8_t len)
+{
+  si446x_hal_spi_nsel_low();
+  si446x_hal_spi_read_byte(Si446x_CMD_READ_RX_FIFO);
+  si446x_hal_spi_read(buffer, len);
+  si446x_hal_spi_nsel_high();
+}
+
 void si446x_ctrl_send_stream(const uint8_t *buffer, const uint8_t len)
 {
   si446x_hal_spi_nsel_low();

@@ -438,7 +438,6 @@ uint8_t radio_available(void)
   return 1;
 }
 
-
 void radio_set_rx_mode(const gfsk_mode_t gfsk)
 {
   const uint8_t max_rx_len[] = {50};

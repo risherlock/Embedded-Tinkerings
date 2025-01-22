@@ -31,7 +31,7 @@ int main()
   // radio_init_morse();
   // mini_morse_tx(radio_msg1, sizeof(radio_msg1));
 
-  radio_init_gfsk();
+  radio_init_gfsk(GFSK_1KBPS_2KHZ);
   uint8_t msg_flag = 1;
 
   while (0x221b)

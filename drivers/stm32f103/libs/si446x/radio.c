@@ -257,6 +257,12 @@ void radio_init_gfsk(const gfsk_mode_t gfsk)
 
   case GFSK_1KBPS_2KHZ:
   {
+    const uint8_t rate_config[] = {0x00, 0x9c, 0x40};
+    set_properties(Si446x_PROP_MODEM_DATA_RATE_2, rate_config, sizeof(rate_config));
+
+    const uint8_t fdev_config[] = {0x00, 0x00, 0x8c};
+    set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, fdev_config, sizeof(fdev_config));
+
     break;
   }
 
@@ -446,7 +452,7 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
     uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
     set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
 
-    uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
+    uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00};
     set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
     uint8_t bcr[] = {0x02, 0x71, 0x00, 0xd1, 0xb7, 0x00};
@@ -466,6 +472,27 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
 
   case GFSK_1KBPS_2KHZ:
   {
+    uint8_t synth[] = {0x2c, 0x0e, 0x0b, 0x04, 0x0c, 0x73, 0x03};
+    set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
+
+    uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00};
+    set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
+
+    uint8_t bcr[] = {0x03, 0xaa, 0x00, 0x8b, 0xcf, 0x00, 0x46, 0x02, 0xc2, 0x00};
+    set_properties(Si446x_PROP_MODEM_BCR_OSR_1, bcr, sizeof(bcr));
+
+    uint8_t mod_decim[] = {0x32, 0x20};
+    set_properties(Si446x_PROP_MODEM_DECIMATION_CFG1, mod_decim, sizeof(mod_decim));
+
+    uint8_t mod_raw[] = {0x84, 0x81, 0x00, 0xb1};
+    set_properties(Si446x_PROP_MODEM_RAW_SEARCH, mod_raw, sizeof(mod_raw));
+
+    uint8_t mod_ook[] = {0x2b, 0x0c, 0xa4};
+    set_properties(Si446x_PROP_MODEM_OOK_PDTC, mod_ook, sizeof(mod_ook));
+
+    uint8_t afc[] = {0x04, 0x23, 0x80, 0x01, 0x5D, 0x35, 0x80};
+    set_properties(Si446x_PROP_MODEM_AFC_GEAR, afc, sizeof(afc));
+
     break;
   }
 

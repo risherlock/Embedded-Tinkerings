@@ -441,23 +441,23 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(const gfsk_mode_t gfsk)
 {
-  // const uint8_t max_rx_len[] = {50};
-  // set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
+  const uint8_t max_rx_len[] = {50};
+  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
 
-  // const uint8_t reset_fifo[] = {0x02};
-  // si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
+  const uint8_t reset_fifo[] = {0x02};
+  si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
 
-  // const uint8_t rx_int[3] = {0x03, 0x18, 0x00};
-  // set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
-  // clear_interrupts();
+  const uint8_t rx_int[3] = {0x03, 0x18, 0x00};
+  set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
+  clear_interrupts();
+
+  uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
+  set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
 
   switch (gfsk)
   {
   case GFSK_500BPS_1KHZ:
   {
-    uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
-    set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
-
     uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00};
     set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
@@ -478,9 +478,6 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
 
   case GFSK_1KBPS_2KHZ:
   {
-    uint8_t synth[] = {0x2c, 0x0e, 0x0b, 0x04, 0x0c, 0x73, 0x03};
-    set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
-
     uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00};
     set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
@@ -536,6 +533,7 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
   radio_set_state(START_RX);
   current_radio_state = START_RX;
 }
+
 // Figure 22, an633.pdf
 bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
 {

@@ -236,21 +236,41 @@ void radio_init_morse(void)
   set_properties(Si446x_PROP_MODEM_CLKGEN_BAND, band_config, sizeof(band_config));
 }
 
-void radio_init_gfsk(void)
+
+// Frequency: 436.6 MHz, Speed: 500 bps, FD: 1 kHz, CRC: CCIT
+void radio_init_gfsk(const gfsk_mode_t gfsk)
 {
   /* Modem configuration */
+
+  switch (gfsk)
+  {
+  case GFSK_500BPS_1KHZ:
+  {
+    const uint8_t rate_config[] = {0x00, 0x4E, 0x20};
+    set_properties(Si446x_PROP_MODEM_DATA_RATE_2, rate_config, sizeof(rate_config));
+
+    const uint8_t fdev_config[] = {0x00, 0x00, 0x46};
+    set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, fdev_config, sizeof(fdev_config));
+
+    break;
+  }
+
+  case GFSK_1KBPS_2KHZ:
+  {
+    break;
+  }
+
+  case GFSK_5KBPS_10KHZ:
+  {
+    break;
+  }
+  }
 
   const uint8_t modem_config[] = {0x03};
   set_properties(Si446x_PROP_MODEM_MOD_TYPE, modem_config, sizeof(modem_config));
 
-  const uint8_t rate_config[] = {0x00, 0x4E, 0x20};
-  set_properties(Si446x_PROP_MODEM_DATA_RATE_2, rate_config, sizeof(rate_config));
-
   const uint8_t nco_config[] = {0x05, 0xC9, 0xC3, 0x80}; // where?
   set_properties(Si446x_PROP_MODEM_TX_NCO_MODE_3, nco_config, sizeof(nco_config));
-
-  const uint8_t fdev_config[] = {0x00, 0x00, 0x46};
-  set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, fdev_config, sizeof(fdev_config));
 
   const uint8_t band_config[] = {0xA}; // where?
   set_properties(Si446x_PROP_MODEM_CLKGEN_BAND, band_config, sizeof(band_config));
@@ -406,7 +426,8 @@ uint8_t radio_available(void)
   return 1;
 }
 
-void radio_set_rx_mode(void)
+
+void radio_set_rx_mode(const gfsk_mode_t gfsk)
 {
   const uint8_t max_rx_len[] = {50};
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
@@ -418,28 +439,45 @@ void radio_set_rx_mode(void)
   set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
   clear_interrupts();
 
-  uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
-  set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
+  switch (gfsk)
+  {
+  case GFSK_500BPS_1KHZ:
+  {
+    uint8_t synth[] = {0x2C, 0x0E, 0x0B, 0x04, 0x0C, 0x73, 0x03};
+    set_properties(Si446x_PROP_SYNTH_PFDCP_CPFF, synth, sizeof(synth));
 
-  uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
-  set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
+    uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00, 0x00, 0x10};
+    set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
 
-  uint8_t bcr[] = {0x02, 0x71, 0x00, 0xd1, 0xb7, 0x00};
-  set_properties(Si446x_PROP_MODEM_BCR_OSR_1, bcr, sizeof(bcr));
+    uint8_t bcr[] = {0x02, 0x71, 0x00, 0xd1, 0xb7, 0x00};
+    set_properties(Si446x_PROP_MODEM_BCR_OSR_1, bcr, sizeof(bcr));
 
-  uint8_t mod_decim[] = {0x34, 0x11};
-  set_properties(Si446x_PROP_MODEM_DECIMATION_CFG1, mod_decim, sizeof(mod_decim));
+    uint8_t mod_decim[] = {0x34, 0x11};
+    set_properties(Si446x_PROP_MODEM_DECIMATION_CFG1, mod_decim, sizeof(mod_decim));
 
-  uint8_t mod_raw[] = {0x56, 0x81, 0x00, 0x68};
-  set_properties(Si446x_PROP_MODEM_RAW_SEARCH, mod_raw, sizeof(mod_raw));
+    uint8_t mod_raw[] = {0x56, 0x81, 0x00, 0x68};
+    set_properties(Si446x_PROP_MODEM_RAW_SEARCH, mod_raw, sizeof(mod_raw));
 
-  uint8_t mod_ook[] = {0x0C, 0xA4, 0x22};
-  set_properties(Si446x_PROP_MODEM_OOK_PDTC, mod_ook, sizeof(mod_ook));
+    uint8_t mod_ook[] = {0x0C, 0xA4, 0x22};
+    set_properties(Si446x_PROP_MODEM_OOK_PDTC, mod_ook, sizeof(mod_ook));
+
+    break;
+  }
+
+  case GFSK_1KBPS_2KHZ:
+  {
+    break;
+  }
+
+  case GFSK_5KBPS_10KHZ:
+  {
+    break;
+  }
+  }
 
   radio_set_state(START_RX);
   current_radio_state = START_RX;
 }
-
 // Figure 22, an633.pdf
 bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
 {

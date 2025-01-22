@@ -22,8 +22,8 @@ int main()
   }
   usart_txln("Radio success!");
 
-  radio_init_gfsk();
-  radio_set_rx_mode();
+  radio_init_gfsk(GFSK_500BPS_1KHZ);
+  radio_set_rx_mode(GFSK_500BPS_1KHZ);
 
   while (1)
   {

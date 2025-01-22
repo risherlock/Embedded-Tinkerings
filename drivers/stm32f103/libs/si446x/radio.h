@@ -13,6 +13,13 @@
 
 typedef enum
 {
+  GFSK_500BPS_1KHZ,
+  GFSK_1KBPS_2KHZ,
+  GFSK_5KBPS_10KHZ
+} gfsk_mode_t;
+
+typedef enum
+{
   NO_CHANGE = 0x00,
   SLEEP = 0x01,
   SPI_ACTIVE = 0x02,
@@ -62,10 +69,10 @@ radio_state_t radio_get_state(void);
 void radio_set_state(radio_state_t s);
 void radio_set_power(uint8_t power);
 
-void radio_init_gfsk(void);
 void radio_init_morse(void);
-void radio_set_rx_mode(void);
-void radio_set_tx_mode(void);
+void radio_init_gfsk(const gfsk_mode_t gfsk);
+void radio_set_rx_mode(const gfsk_mode_t gfsk);
+
 bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len);
 void radio_tx_gfsk(const uint8_t* data, const uint8_t n);
 

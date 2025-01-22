@@ -268,6 +268,12 @@ void radio_init_gfsk(const gfsk_mode_t gfsk)
 
   case GFSK_5KBPS_10KHZ:
   {
+    const uint8_t rate_config[] = {0x00, 0x9c, 0x40};
+    set_properties(Si446x_PROP_MODEM_DATA_RATE_2, rate_config, sizeof(rate_config));
+
+    const uint8_t fdev_config[] = {0x00, 0x00, 0x8c};
+    set_properties(Si446x_PROP_MODEM_FREQ_DEV_2, fdev_config, sizeof(fdev_config));
+
     break;
   }
   }
@@ -435,15 +441,15 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(const gfsk_mode_t gfsk)
 {
-  const uint8_t max_rx_len[] = {50};
-  set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
+  // const uint8_t max_rx_len[] = {50};
+  // set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
 
-  const uint8_t reset_fifo[] = {0x02};
-  si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
+  // const uint8_t reset_fifo[] = {0x02};
+  // si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, reset_fifo, sizeof(reset_fifo));
 
-  const uint8_t rx_int[3] = {0x03, 0x18, 0x00};
-  set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
-  clear_interrupts();
+  // const uint8_t rx_int[3] = {0x03, 0x18, 0x00};
+  // set_properties(Si446x_PROP_INT_CTL_ENABLE, rx_int, sizeof(rx_int));
+  // clear_interrupts();
 
   switch (gfsk)
   {
@@ -498,6 +504,31 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
 
   case GFSK_5KBPS_10KHZ:
   {
+    uint8_t ramp_delay[] = {0x01, 0x80, 0x08, 0x03, 0x80, 0x00};
+    set_properties(Si446x_PROP_MODEM_TX_RAMP_DELAY, ramp_delay, sizeof(ramp_delay));
+
+    uint8_t bcr[] = {0x01, 0x77, 0x01, 0x5d, 0x86, 0x00, 0xaf, 0x02, 0xc2, 0x00};
+    set_properties(Si446x_PROP_MODEM_BCR_OSR_1, bcr, sizeof(bcr));
+
+    uint8_t mod_decim[] = {0x30, 0x20};
+    set_properties(Si446x_PROP_MODEM_DECIMATION_CFG1, mod_decim, sizeof(mod_decim));
+
+    uint8_t mod_raw[] = {0x84, 0x83, 0x00, 0xde, 0x01, 0x00};
+    set_properties(Si446x_PROP_MODEM_RAW_SEARCH, mod_raw, sizeof(mod_raw));
+
+    uint8_t mod_ook[] = {0x2a, 0x0c, 0xa4, 0x22};
+    set_properties(Si446x_PROP_MODEM_OOK_PDTC, mod_ook, sizeof(mod_ook));
+
+    uint8_t afc[] = {0x04, 0x23, 0x80, 0x0f, 0x15, 0x9a, 0x80};
+    set_properties(Si446x_PROP_MODEM_AFC_GEAR, afc, sizeof(afc));
+
+    uint8_t agc[] = {0x11, 0x52, 0x52};
+    set_properties(Si446x_PROP_MODEM_AGC_CONTROL, (uint8_t []){0xe0}, 1);
+    set_properties(Si446x_PROP_MODEM_AGC_WINDOW_SIZE, agc, sizeof(agc));
+
+    uint8_t fsk_gain[] = {0x80, 0x1a, 0xff, 0xff, 0x00};
+    set_properties(Si446x_PROP_MODEM_FSK4_GAIN1, fsk_gain, sizeof(fsk_gain));
+
     break;
   }
   }

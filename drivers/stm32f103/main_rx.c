@@ -5,9 +5,6 @@
 
 #include <inttypes.h>
 
-uint8_t rx_msg[100];
-uint8_t len;
-
 int main()
 {
   led_init();
@@ -27,6 +24,9 @@ int main()
 
   while (1)
   {
+    uint8_t rx_msg[255] = {0};
+    uint8_t len;
+
     if (radio_rx_gfsk(rx_msg, sizeof(rx_msg), &len))
     {
       usart_tx("Received packet: ");

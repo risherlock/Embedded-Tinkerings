@@ -9,8 +9,17 @@
 
 #define RADIO_PAYLOAD_LENGTH 255
 
+void rx_next_fragment(void);
+
 volatile radio_state_t current_radio_state = READY;
 radio_interrupts_t radio_interrupts;
+
+typedef struct
+{
+  int buff_len;
+} buff_tracker_t;
+
+static buff_tracker_t buff_tracker;
 
 void radio_reset(void)
 {
@@ -384,6 +393,7 @@ void EXTI1_IRQHandler(void)
 
     if(radio_interrupts.packet_rx)
     {
+	    rx_next_fragment();
       usart_tx("pkt-rx!\n");
     }
 
@@ -410,6 +420,12 @@ void EXTI1_IRQHandler(void)
     if(radio_interrupts.invalid_preamble)
     {
       usart_tx("invalid-preamble!\n");
+    }
+
+    if (radio_interrupts.rx_fifo_almost_full)
+    {
+      usart_tx("almost-full!\n");
+	    rx_next_fragment();
     }
 
     // State changes to READY after interrupt
@@ -533,6 +549,31 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
   current_radio_state = START_RX;
 }
 
+uint8_t rx_buffer[256];
+
+void rx_next_fragment()
+{
+  // Get length
+  uint8_t fifo_info[1] = {0};
+  si446x_ctrl_send_cmd(Si446x_CMD_FIFO_INFO);
+  si446x_ctrl_get_response(fifo_info, sizeof(fifo_info));
+  uint8_t rx_len = fifo_info[0];
+
+  // Check overflow
+  if ((rx_len + buff_tracker.buff_len) > 255)
+  {
+    usart_tx("Overflow\n");
+    radio_set_state(SPI_ACTIVE);
+    si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, (uint8_t []){0x02}, 1);
+    buff_tracker.buff_len = 0;
+    return;
+  }
+
+  si446x_ctrl_read_rx_fifo(rx_buffer + buff_tracker.buff_len, rx_len);
+  // si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, (uint8_t []){0x02}, 1);
+  buff_tracker.buff_len += fifo_info[0];
+}
+
 // Figure 22, an633.pdf
 bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
 {
@@ -542,30 +583,22 @@ bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
   }
 
   // Has interrupt fired?
-  if(radio_interrupts.packet_rx)
-  {
+  // if(radio_interrupts.packet_rx)
+  // {
     clear_interrupts();
 
     // Get length
-    uint8_t fifo_info[1] = {0};
-    si446x_ctrl_send_cmd(Si446x_CMD_FIFO_INFO);
-    si446x_ctrl_get_response(fifo_info, sizeof(fifo_info));
-    *rx_len = fifo_info[0];
-
-    if (*rx_len > 0)
+    for (uint8_t i = 0; i < buff_tracker.buff_len; i++)
     {
-      si446x_ctrl_read_rx_fifo(buff, buff_len);
-    }
-    else
-    {
-      return false;
+      buff[i] = rx_buffer[i];
     }
 
-    radio_set_state(START_RX);
-    current_radio_state = START_RX;
+    buff_tracker.buff_len = 0;
+    // radio_set_state(START_RX);
+    // current_radio_state = START_RX;
 
     return true;
-  }
+  // }
 
-  return false;
+  // return false;
 }

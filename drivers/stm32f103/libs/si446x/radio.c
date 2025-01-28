@@ -570,7 +570,6 @@ void rx_next_fragment()
   }
 
   si446x_ctrl_read_rx_fifo(rx_buffer + buff_tracker.buff_len, rx_len);
-  // si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, (uint8_t []){0x02}, 1);
   buff_tracker.buff_len += fifo_info[0];
 }
 
@@ -582,23 +581,18 @@ bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
     return false;
   }
 
-  // Has interrupt fired?
-  // if(radio_interrupts.packet_rx)
-  // {
-    clear_interrupts();
+  clear_interrupts();
 
-    // Get length
-    for (uint8_t i = 0; i < buff_tracker.buff_len; i++)
-    {
-      buff[i] = rx_buffer[i];
-    }
+  // Get length
+  for (uint8_t i = 0; i < buff_tracker.buff_len; i++)
+  {
+    buff[i] = rx_buffer[i];
+  }
 
-    buff_tracker.buff_len = 0;
-    // radio_set_state(START_RX);
-    // current_radio_state = START_RX;
+  buff_tracker.buff_len = 0;
 
-    return true;
-  // }
+  radio_set_state(START_RX);
+  current_radio_state = START_RX;
 
-  // return false;
+  return true;
 }

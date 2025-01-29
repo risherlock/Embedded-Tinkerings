@@ -388,23 +388,23 @@ void EXTI1_IRQHandler(void)
 
     if(radio_interrupts.packet_sent)
     {
-      usart_tx("pkt-sent!\n");
+      // usart_tx("pkt-sent!\n");
     }
 
     if(radio_interrupts.packet_rx)
     {
 	    rx_next_fragment();
-      usart_tx("pkt-rx!\n");
+      // usart_tx("pkt-rx!\n");
     }
 
     if(radio_interrupts.preamble_detect)
     {
-      usart_tx("preamble-detected!\n");
+      // usart_tx("preamble-detected!\n");
     }
 
     if(radio_interrupts.sync_detect)
     {
-      usart_tx("sync-detected!\n");
+      // usart_tx("sync-detected!\n");
     }
 
     if(radio_interrupts.crc_error)
@@ -424,7 +424,7 @@ void EXTI1_IRQHandler(void)
 
     if (radio_interrupts.rx_fifo_almost_full)
     {
-      usart_tx("almost-full!\n");
+      // usart_tx("almost-full!\n");
 	    rx_next_fragment();
     }
 
@@ -456,7 +456,7 @@ uint8_t radio_available(void)
 
 void radio_set_rx_mode(const gfsk_mode_t gfsk)
 {
-  const uint8_t max_rx_len[] = {50};
+  const uint8_t max_rx_len[] = {255};
   set_properties(Si446x_PROP_PKT_FIELD_2_LENGTH_7_0, max_rx_len, sizeof(max_rx_len));
 
   const uint8_t reset_fifo[] = {0x02};
@@ -562,15 +562,16 @@ void rx_next_fragment()
   // Check overflow
   if ((rx_len + buff_tracker.buff_len) > 255)
   {
-    usart_tx("Overflow\n");
-    radio_set_state(SPI_ACTIVE);
-    si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, (uint8_t []){0x02}, 1);
-    buff_tracker.buff_len = 0;
-    return;
+    // usart_tx("Overflow\n");
+    // radio_set_state(SPI_ACTIVE);
+    // si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, (uint8_t []){0x02}, 1);
+    // buff_tracker.buff_len = 0;
+    // return;
+    rx_len = 255 - buff_tracker.buff_len;
   }
 
   si446x_ctrl_read_rx_fifo(rx_buffer + buff_tracker.buff_len, rx_len);
-  buff_tracker.buff_len += fifo_info[0];
+  buff_tracker.buff_len += rx_len;
 }
 
 // Figure 22, an633.pdf

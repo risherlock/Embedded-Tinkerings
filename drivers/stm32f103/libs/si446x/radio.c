@@ -7,7 +7,7 @@
 #include "radio_config.h"
 #include <string.h>
 
-#define RADIO_PAYLOAD_LENGTH 255
+#define RADIO_PAYLOAD_LENGTH 256
 
 void rx_next_fragment(void);
 
@@ -549,27 +549,24 @@ void radio_set_rx_mode(const gfsk_mode_t gfsk)
   current_radio_state = START_RX;
 }
 
-uint8_t rx_buffer[256];
+uint8_t rx_buffer[RADIO_PAYLOAD_LENGTH];
 
-void rx_next_fragment()
+void rx_next_fragment(void)
 {
-  // Get length
-  uint8_t fifo_info[1] = {0};
+  // Data available in the RX FIFO
+  uint8_t fifo_info[] = {0, 0};
   si446x_ctrl_send_cmd(Si446x_CMD_FIFO_INFO);
   si446x_ctrl_get_response(fifo_info, sizeof(fifo_info));
-  uint8_t rx_len = fifo_info[0];
+  uint8_t rx_len = fifo_info[1];
 
-  // Check overflow
-  if ((rx_len + buff_tracker.buff_len) > 255)
+  // Buffer overflow
+  if ((rx_len + buff_tracker.buff_len) > RADIO_PAYLOAD_LENGTH)
   {
-    // usart_tx("Overflow\n");
-    // radio_set_state(SPI_ACTIVE);
-    // si446x_ctrl_send_cmd_stream(Si446x_CMD_FIFO_INFO, (uint8_t []){0x02}, 1);
-    // buff_tracker.buff_len = 0;
-    // return;
-    rx_len = 255 - buff_tracker.buff_len;
+    buff_tracker.buff_len = 0;
+    return;
   }
 
+  // Read RX FIFO and append it to the buffer
   si446x_ctrl_read_rx_fifo(rx_buffer + buff_tracker.buff_len, rx_len);
   buff_tracker.buff_len += rx_len;
 }
@@ -591,9 +588,6 @@ bool radio_rx_gfsk(uint8_t* buff, const uint8_t buff_len, uint8_t* rx_len)
   }
 
   buff_tracker.buff_len = 0;
-
-  radio_set_state(START_RX);
-  current_radio_state = START_RX;
 
   return true;
 }
